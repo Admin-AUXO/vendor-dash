@@ -1,4 +1,4 @@
-# Loki
+# Vendor Dashboard
 
 React application built with Vite, TypeScript, and Tailwind CSS.
 
@@ -35,7 +35,7 @@ This project is automatically deployed to GitHub Pages using GitHub Actions. The
 1. Go to your repository settings on GitHub
 2. Navigate to "Pages" in the left sidebar
 3. Under "Source", select "GitHub Actions"
-4. The site will be available at: `https://Admin-AUXO.github.io/loki/`
+4. The site will be available at: `https://admin-auxo.github.io/vendor-dash/`
 
 ## Project Structure
 
