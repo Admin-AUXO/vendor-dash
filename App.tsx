@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { 
   LayoutDashboard, 
   ClipboardList, 
@@ -13,60 +13,74 @@ import {
   Settings,
   ChevronDown
 } from 'lucide-react';
-import { Overview } from './components/Overview';
-import { WorkOrders } from './components/WorkOrders';
-import { Invoice } from './components/Invoice';
-import { Payments } from './components/Payments';
-import { Marketplace } from './components/Marketplace';
-import { HelpDesk } from './components/HelpDesk';
+
+// Lazy load components for code splitting
+const Overview = lazy(() => import('./components/Overview').then(module => ({ default: module.Overview })));
+const WorkOrders = lazy(() => import('./components/WorkOrders').then(module => ({ default: module.WorkOrders })));
+const Invoice = lazy(() => import('./components/Invoice').then(module => ({ default: module.Invoice })));
+const Payments = lazy(() => import('./components/Payments').then(module => ({ default: module.Payments })));
+const Marketplace = lazy(() => import('./components/Marketplace').then(module => ({ default: module.Marketplace })));
+const HelpDesk = lazy(() => import('./components/HelpDesk').then(module => ({ default: module.HelpDesk })));
 
 type MenuItem = {
   id: string;
   label: string;
   icon: React.ReactNode;
-  component: React.ReactNode;
 };
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [darkMode, setDarkMode] = useState(false);
 
+  const getComponent = (id: string) => {
+    switch (id) {
+      case 'overview':
+        return <Overview />;
+      case 'work-orders':
+        return <WorkOrders />;
+      case 'invoice':
+        return <Invoice />;
+      case 'payments':
+        return <Payments />;
+      case 'marketplace':
+        return <Marketplace />;
+      case 'help-desk':
+        return <HelpDesk />;
+      default:
+        return <Overview />;
+    }
+  };
+
   const menuItems: MenuItem[] = [
     {
       id: 'overview',
       label: 'Overview',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      component: <Overview />
+      icon: <LayoutDashboard className="w-5 h-5" />
     },
     {
       id: 'work-orders',
       label: 'Work Orders',
-      icon: <ClipboardList className="w-5 h-5" />,
-      component: <WorkOrders />
+      icon: <ClipboardList className="w-5 h-5" />
     },
     {
       id: 'invoice',
       label: 'Invoice',
-      icon: <FileText className="w-5 h-5" />,
-      component: <Invoice />
+      icon: <FileText className="w-5 h-5" />
     },
     {
       id: 'payments',
       label: 'Payments',
-      icon: <CreditCard className="w-5 h-5" />,
-      component: <Payments />
+      icon: <CreditCard className="w-5 h-5" />
     },
     {
       id: 'marketplace',
       label: 'Marketplace',
-      icon: <Briefcase className="w-5 h-5" />,
-      component: <Marketplace />
+      icon: <Briefcase className="w-5 h-5" />
     },
     {
       id: 'help-desk',
       label: 'Help Desk',
-      icon: <Headphones className="w-5 h-5" />,
-      component: <HelpDesk />
+      icon: <Headphones className="w-5 h-5" />
     }
   ];
 
@@ -206,7 +220,16 @@ export default function App() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto bg-gray-50">
-          {activeMenuItem?.component}
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                <p className="text-gray-600">Loading...</p>
+              </div>
+            </div>
+          }>
+            {activeTab && getComponent(activeTab)}
+          </Suspense>
         </main>
       </div>
     </div>
