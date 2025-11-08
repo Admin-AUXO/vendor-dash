@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,6 +9,7 @@ import {
   type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
+  type VisibilityState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
@@ -29,6 +30,8 @@ interface DataTableProps<TData> {
   loading?: boolean;
   enableVirtualScrolling?: boolean;
   virtualScrollingThreshold?: number;
+  storageKey?: string; // Key for localStorage persistence
+  onTableReady?: (table: ReturnType<typeof useReactTable<TData>>) => void; // Callback to get table instance
 }
 
 export function DataTable<TData>({
@@ -44,11 +47,86 @@ export function DataTable<TData>({
   loading = false,
   enableVirtualScrolling = false,
   virtualScrollingThreshold = 50,
+  storageKey,
+  onTableReady,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Get essential column IDs
+  const essentialColumnIds = useMemo(() => {
+    return columns
+      .filter((col) => {
+        const meta = col.meta as any;
+        return meta?.essential === true;
+      })
+      .map((col) => col.id || (col as any).accessorKey)
+      .filter((id): id is string => !!id);
+  }, [columns]);
+
+  // Initialize column visibility state (load once on mount)
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
+    if (!storageKey || typeof window === 'undefined') return {};
+    try {
+      const stored = localStorage.getItem(`table-columns-${storageKey}`);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.warn('Failed to load column visibility from localStorage:', error);
+    }
+    return {};
+  });
+
+  // Wrapper for setColumnVisibility that prevents hiding essential columns
+  const setColumnVisibilitySafe = useMemo(() => {
+    return (updater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
+      setColumnVisibility((prev) => {
+        const newState = typeof updater === 'function' ? updater(prev) : updater;
+        // Ensure essential columns are never hidden
+        const safeState = { ...newState };
+        essentialColumnIds.forEach((colId) => {
+          if (safeState[colId] === false) {
+            delete safeState[colId]; // Remove hidden state for essential columns
+          }
+        });
+        return safeState;
+      });
+    };
+  }, [essentialColumnIds]);
+
+  // Ensure essential columns are visible on mount and when columns change
+  useEffect(() => {
+    setColumnVisibility((prev) => {
+      const updated = { ...prev };
+      let changed = false;
+      essentialColumnIds.forEach((colId) => {
+        if (updated[colId] === false) {
+          delete updated[colId];
+          changed = true;
+        }
+      });
+      return changed ? updated : prev;
+    });
+  }, [essentialColumnIds]);
+
+  // Save column visibility to localStorage when it changes
+  useEffect(() => {
+    if (storageKey && typeof window !== 'undefined') {
+      try {
+        // Filter out essential columns from saved state (they're always visible)
+        const stateToSave = { ...columnVisibility };
+        essentialColumnIds.forEach((colId) => {
+          delete stateToSave[colId];
+        });
+        localStorage.setItem(`table-columns-${storageKey}`, JSON.stringify(stateToSave));
+      } catch (error) {
+        console.warn('Failed to save column visibility to localStorage:', error);
+      }
+    }
+  }, [columnVisibility, storageKey, essentialColumnIds]);
 
   const table = useReactTable({
     data,
@@ -60,6 +138,7 @@ export function DataTable<TData>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibilitySafe,
     globalFilterFn: 'includesString',
     initialState: {
       pagination: {
@@ -70,8 +149,17 @@ export function DataTable<TData>({
       sorting,
       columnFilters,
       globalFilter,
+      columnVisibility,
     },
   });
+
+  // Expose table instance to parent via callback (only when table changes, not on every render)
+  useEffect(() => {
+    if (onTableReady) {
+      onTableReady(table);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table]); // Only depend on table, not onTableReady to avoid loops
 
   // Get filtered and sorted rows
   const { rows } = table.getRowModel();
@@ -139,12 +227,15 @@ export function DataTable<TData>({
                   {headerGroup.headers.map((header) => {
                     const canSort = header.column.getCanSort();
                     const sortDirection = header.column.getIsSorted();
+                    const headerAlign = (header.column.columnDef.meta as any)?.headerAlign || 'left';
+                    const textAlignClass = headerAlign === 'center' ? 'text-center' : headerAlign === 'right' ? 'text-right' : 'text-left';
 
                     return (
                       <th
                         key={header.id}
                         className={cn(
-                          'px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider bg-muted',
+                          'px-4 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider bg-muted',
+                          textAlignClass,
                           canSort && 'cursor-pointer select-none hover:bg-gray-100'
                         )}
                         onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
@@ -155,7 +246,7 @@ export function DataTable<TData>({
                           'none'
                         }
                       >
-                        <div className="flex items-center gap-2">
+                        <div className={cn('flex items-center gap-2', headerAlign === 'center' ? 'justify-center' : headerAlign === 'right' ? 'justify-end' : 'justify-start')}>
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {canSort && (
                             <span className="text-gray-400">
@@ -204,11 +295,15 @@ export function DataTable<TData>({
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-4 py-3 text-sm text-gray-900" role="gridcell">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const cellAlign = (cell.column.columnDef.meta as any)?.cellAlign || (cell.column.columnDef.meta as any)?.headerAlign || 'left';
+                        const textAlignClass = cellAlign === 'center' ? 'text-center' : cellAlign === 'right' ? 'text-right' : 'text-left';
+                        return (
+                          <td key={cell.id} className={cn('px-4 py-3 text-sm text-gray-900', textAlignClass)} role="gridcell">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })
@@ -218,11 +313,15 @@ export function DataTable<TData>({
                     key={row.id}
                     className="hover:bg-muted transition-colors"
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3 text-sm text-gray-900" role="gridcell">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const cellAlign = (cell.column.columnDef.meta as any)?.cellAlign || (cell.column.columnDef.meta as any)?.headerAlign || 'left';
+                        const textAlignClass = cellAlign === 'center' ? 'text-center' : cellAlign === 'right' ? 'text-right' : 'text-left';
+                        return (
+                          <td key={cell.id} className={cn('px-4 py-3 text-sm text-gray-900', textAlignClass)} role="gridcell">
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        );
+                      })}
                   </tr>
                 ))
               )}

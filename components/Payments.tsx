@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from './ui';
+import { useState, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from './ui';
 import { 
   StatCard, 
   FilterSystem,
@@ -8,6 +8,7 @@ import {
   StatusBadge,
   ExportButton,
   EmptyState,
+  ColumnVisibilityToggle,
   type FilterGroup,
 } from './shared';
 import { 
@@ -39,6 +40,12 @@ export function Payments() {
   const [paymentDateRange, setPaymentDateRange] = useState<DateRange | undefined>();
   const [amountRange, setAmountRange] = useState<{ min: number | null; max: number | null }>({ min: null, max: null });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [tableInstance, setTableInstance] = useState<any>(null);
+
+  // Stable callback for table ready
+  const handleTableReady = useCallback((table: any) => {
+    setTableInstance(table);
+  }, []);
 
   // Get min and max amounts for range filter
   const amountStats = useMemo(() => {
@@ -159,6 +166,7 @@ export function Payments() {
     {
       accessorKey: 'paymentId',
       header: 'Payment ID',
+      meta: { essential: true },
       cell: ({ row }) => (
         <span className="font-semibold text-sm font-mono">{row.original.paymentId}</span>
       ),
@@ -166,6 +174,7 @@ export function Payments() {
     {
       accessorKey: 'invoiceNumber',
       header: 'Invoice #',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900 font-mono">{row.original.invoiceNumber}</span>
       ),
@@ -173,6 +182,7 @@ export function Payments() {
     {
       accessorKey: 'clientName',
       header: 'Client',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">{row.original.clientName}</span>
       ),
@@ -180,6 +190,7 @@ export function Payments() {
     {
       accessorKey: 'paymentDate',
       header: 'Payment Date',
+      meta: { headerAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.paymentDate), 'MMM dd, yyyy')}
@@ -189,6 +200,7 @@ export function Payments() {
     {
       accessorKey: 'amount',
       header: 'Amount',
+      meta: { headerAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.amount).format()}
@@ -198,6 +210,7 @@ export function Payments() {
     {
       accessorKey: 'paymentMethod',
       header: 'Method',
+      meta: { essential: false },
       cell: ({ row }) => {
         const Icon = getPaymentMethodIcon(row.original.paymentMethod);
         return (
@@ -213,6 +226,7 @@ export function Payments() {
     {
       accessorKey: 'referenceNumber',
       header: 'Reference #',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900 font-mono">
           {row.original.referenceNumber || '—'}
@@ -222,6 +236,7 @@ export function Payments() {
     {
       accessorKey: 'status',
       header: 'Status',
+      meta: { headerAlign: 'center', essential: true },
       cell: ({ row }) => {
         const status = row.original.status;
         const statusMap: Record<string, { type: 'success' | 'warning' | 'error' | 'info' | 'pending', label: string }> = {
@@ -232,12 +247,13 @@ export function Payments() {
           'cancelled': { type: 'error', label: 'Cancelled' },
         };
         const mapped = statusMap[status] || { type: 'pending' as const, label: status };
-        return <StatusBadge status={mapped.type} label={mapped.label} />;
+        return <div className="flex justify-center"><StatusBadge status={mapped.type} label={mapped.label} /></div>;
       },
     },
     {
       id: 'actions',
       header: 'Actions',
+      meta: { essential: true },
       cell: () => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm">
@@ -331,6 +347,9 @@ export function Payments() {
               <CardTitle className="flex items-center gap-2 text-lg">
                 <AlertCircle className="w-5 h-5" style={{ color: 'var(--warning)' }} />
                 Outstanding Balances
+                <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                  {outstandingBalances.length}
+                </Badge>
               </CardTitle>
               {hasMoreOutstanding && (
                 <Button
@@ -437,7 +456,12 @@ export function Payments() {
           <Card>
             <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Payment History ({filteredData.length})</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Payment History
+                <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                  {filteredData.length}
+                </Badge>
+              </CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -457,6 +481,9 @@ export function Payments() {
                   data={filteredData}
                   filename="payments"
                 />
+                {tableInstance && (
+                  <ColumnVisibilityToggle table={tableInstance} />
+                )}
               </div>
             </div>
             </CardHeader>
@@ -468,6 +495,8 @@ export function Payments() {
                   pagination
                   pageSize={10}
                   searchable={false}
+                  storageKey="payments"
+                  onTableReady={handleTableReady}
                 />
               ) : (
                 <EmptyState

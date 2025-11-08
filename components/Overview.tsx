@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from './ui';
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from './ui';
 import { 
   StatCard, 
   Timeline,
@@ -39,6 +39,11 @@ export function Overview() {
   
   // Get primary color from CSS variables
   const primaryColor = useMemo(() => getCSSVariable('--primary', '#f7d604'), []);
+
+  // Get total count of urgent work orders
+  const totalUrgentWorkOrders = useMemo(() => {
+    return workOrders.filter((wo: WorkOrder) => wo.priority === 'urgent' || wo.priority === 'high').length;
+  }, []);
 
   // Get urgent work orders - increase from 5 to 7 cards
   const urgentWorkOrders = useMemo(() => {
@@ -215,6 +220,9 @@ export function Overview() {
             <CardTitle className="flex items-center gap-2 text-lg">
               <AlertTriangle className="w-4 h-4" style={{ color: 'var(--warning)' }} />
               Urgent Work Orders
+              <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                {totalUrgentWorkOrders}
+              </Badge>
             </CardTitle>
               <Button
                 variant="ghost"

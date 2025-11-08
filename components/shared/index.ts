@@ -1,6 +1,7 @@
 // Reusable Components
 export { StatusBadge } from './StatusBadge';
 export type { StatusType } from './StatusBadge';
+export { ColumnVisibilityToggle } from './ColumnVisibilityToggle';
 export { PriorityBadge } from './PriorityBadge';
 export type { PriorityLevel } from './PriorityBadge';
 export { SearchBar } from './SearchBar';

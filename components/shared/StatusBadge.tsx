@@ -27,7 +27,7 @@ export function StatusBadge({ status, label, className, size = 'md' }: StatusBad
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full border font-medium min-w-[60px]',
+        'inline-flex items-center justify-center rounded-full border font-medium w-[110px] whitespace-nowrap',
         statusStyles[status],
         sizeStyles[size],
         className

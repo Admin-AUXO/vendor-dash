@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from './ui';
+import { useState, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from './ui';
 import { 
   StatCard, 
   FilterSystem,
@@ -10,6 +10,7 @@ import {
   ExportButton,
   EmptyState,
   TruncatedText,
+  ColumnVisibilityToggle,
   type FilterGroup,
 } from './shared';
 import { 
@@ -33,6 +34,12 @@ export function WorkOrders() {
     serviceCategory: [],
   });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [tableInstance, setTableInstance] = useState<any>(null);
+
+  // Stable callback for table ready
+  const handleTableReady = useCallback((table: any) => {
+    setTableInstance(table);
+  }, []);
 
   // Filter data
   const filteredData = useMemo(() => {
@@ -82,6 +89,7 @@ export function WorkOrders() {
     {
       accessorKey: 'workOrderId',
       header: 'Work Order ID',
+      meta: { essential: true },
       cell: ({ row }) => (
         <span className="font-semibold text-sm font-mono">{row.original.workOrderId}</span>
       ),
@@ -89,6 +97,7 @@ export function WorkOrders() {
     {
       accessorKey: 'propertyAddress',
       header: 'Property Address',
+      meta: { essential: false },
       cell: ({ row }) => (
         <div>
           <TruncatedText 
@@ -103,6 +112,7 @@ export function WorkOrders() {
     {
       accessorKey: 'clientName',
       header: 'Client',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">{row.original.clientName}</span>
       ),
@@ -110,6 +120,7 @@ export function WorkOrders() {
     {
       accessorKey: 'status',
       header: 'Status',
+      meta: { headerAlign: 'center', essential: true },
       cell: ({ row }) => {
         const status = row.original.status;
         const statusMap: Record<string, { type: 'success' | 'warning' | 'error' | 'info' | 'pending', label: string }> = {
@@ -120,17 +131,19 @@ export function WorkOrders() {
           'cancelled': { type: 'error', label: 'Cancelled' },
         };
         const mapped = statusMap[status] || { type: 'pending' as const, label: status };
-        return <StatusBadge status={mapped.type} label={mapped.label} />;
+        return <div className="flex justify-center"><StatusBadge status={mapped.type} label={mapped.label} /></div>;
       },
     },
     {
       accessorKey: 'priority',
       header: 'Priority',
-      cell: ({ row }) => <PriorityBadge priority={row.original.priority} />,
+      meta: { headerAlign: 'center', essential: false },
+      cell: ({ row }) => <div className="flex justify-center"><PriorityBadge priority={row.original.priority} /></div>,
     },
     {
       accessorKey: 'dueDate',
       header: 'Due Date',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.dueDate), 'MMM dd, yyyy')}
@@ -140,6 +153,7 @@ export function WorkOrders() {
     {
       accessorKey: 'estimatedCost',
       header: 'Estimated Cost',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.estimatedCost).format()}
@@ -149,6 +163,7 @@ export function WorkOrders() {
     {
       id: 'actions',
       header: 'Actions',
+      meta: { essential: true },
       cell: () => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm">
@@ -266,7 +281,12 @@ export function WorkOrders() {
           <Card>
             <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Work Orders ({filteredData.length})</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Work Orders
+                <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                  {filteredData.length}
+                </Badge>
+              </CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -290,6 +310,9 @@ export function WorkOrders() {
                   data={filteredData}
                   filename="work-orders"
                 />
+                {tableInstance && (
+                  <ColumnVisibilityToggle table={tableInstance} />
+                )}
               </div>
             </div>
             </CardHeader>
@@ -301,6 +324,8 @@ export function WorkOrders() {
                   pagination
                   pageSize={10}
                   searchable={false}
+                  storageKey="work-orders"
+                  onTableReady={handleTableReady}
                 />
               ) : (
                 <EmptyState

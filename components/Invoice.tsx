@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from './ui';
+import { useState, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from './ui';
 import { 
   StatCard, 
   FilterSystem,
@@ -8,6 +8,7 @@ import {
   StatusBadge,
   ExportButton,
   EmptyState,
+  ColumnVisibilityToggle,
   type FilterGroup,
 } from './shared';
 import { 
@@ -39,6 +40,12 @@ export function Invoice() {
   const [dueDateRange, setDueDateRange] = useState<DateRange | undefined>();
   const [amountRange, setAmountRange] = useState<{ min: number | null; max: number | null }>({ min: null, max: null });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [tableInstance, setTableInstance] = useState<any>(null);
+
+  // Stable callback for table ready
+  const handleTableReady = useCallback((table: any) => {
+    setTableInstance(table);
+  }, []);
 
   // Create work order lookup map (internal ID -> display ID)
   const workOrderLookup = useMemo(() => {
@@ -164,6 +171,7 @@ export function Invoice() {
     {
       accessorKey: 'invoiceNumber',
       header: 'Invoice #',
+      meta: { essential: true },
       cell: ({ row }) => (
         <span className="font-semibold text-sm font-mono">{row.original.invoiceNumber}</span>
       ),
@@ -171,6 +179,7 @@ export function Invoice() {
     {
       accessorKey: 'workOrderId',
       header: 'Work Order',
+      meta: { essential: false },
       cell: ({ row }) => {
         const workOrderDisplayId = row.original.workOrderId 
           ? workOrderLookup.get(row.original.workOrderId) 
@@ -185,6 +194,7 @@ export function Invoice() {
     {
       accessorKey: 'clientName',
       header: 'Client',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">{row.original.clientName}</span>
       ),
@@ -192,11 +202,12 @@ export function Invoice() {
     {
       id: 'dates',
       header: 'Dates',
+      meta: { headerAlign: 'center', essential: false },
       cell: ({ row }) => {
         const issueDate = format(new Date(row.original.issueDate), 'MMM dd, yyyy');
         const dueDate = format(new Date(row.original.dueDate), 'MMM dd, yyyy');
         return (
-          <div className="text-sm">
+          <div className="text-sm text-center">
             <div className="text-gray-900 font-medium">{issueDate}</div>
             <div className="text-gray-500 text-xs">Due: {dueDate}</div>
           </div>
@@ -205,7 +216,8 @@ export function Invoice() {
     },
     {
       id: 'daysOverdue',
-      header: 'Days Overdue',
+      header: 'Overdue',
+      meta: { headerAlign: 'center', essential: false },
       cell: ({ row }) => {
         const invoice = row.original;
         if (invoice.status === 'overdue' || (invoice.status !== 'paid' && new Date(invoice.dueDate) < new Date())) {
@@ -227,6 +239,7 @@ export function Invoice() {
     {
       accessorKey: 'total',
       header: 'Amount',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.total).format()}
@@ -236,6 +249,7 @@ export function Invoice() {
     {
       accessorKey: 'status',
       header: 'Status',
+      meta: { headerAlign: 'center', essential: true },
       cell: ({ row }) => {
         const status = row.original.status;
         const statusMap: Record<string, { type: 'success' | 'warning' | 'error' | 'info' | 'pending', label: string }> = {
@@ -249,12 +263,13 @@ export function Invoice() {
           'cancelled': { type: 'error', label: 'Cancelled' },
         };
         const mapped = statusMap[status] || { type: 'pending' as const, label: status };
-        return <StatusBadge status={mapped.type} label={mapped.label} />;
+        return <div className="flex justify-center"><StatusBadge status={mapped.type} label={mapped.label} /></div>;
       },
     },
     {
       id: 'actions',
       header: 'Actions',
+      meta: { essential: true },
       cell: ({ row }) => {
         const invoice = row.original;
         const canEdit = invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'viewed';
@@ -455,7 +470,12 @@ export function Invoice() {
           <Card>
             <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Invoices ({filteredData.length})</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                Invoices
+                <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                  {filteredData.length}
+                </Badge>
+              </CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -479,6 +499,9 @@ export function Invoice() {
                   data={filteredData}
                   filename="invoices"
                 />
+                {tableInstance && (
+                  <ColumnVisibilityToggle table={tableInstance} />
+                )}
               </div>
             </div>
             </CardHeader>
@@ -490,6 +513,8 @@ export function Invoice() {
                   pagination
                   pageSize={10}
                   searchable={false}
+                  storageKey="invoices"
+                  onTableReady={handleTableReady}
                 />
               ) : (
                 <EmptyState

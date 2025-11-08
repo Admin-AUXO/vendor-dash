@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Tabs, TabsContent, TabsList, TabsTrigger, Badge } from './ui';
 import { 
   StatCard, 
@@ -11,6 +11,7 @@ import {
   EmptyState,
   Accordion,
   TruncatedText,
+  ColumnVisibilityToggle,
   type FilterGroup,
 } from './shared';
 import { 
@@ -36,6 +37,12 @@ export function HelpDesk() {
     category: [],
   });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [tableInstance, setTableInstance] = useState<any>(null);
+
+  // Stable callback for table ready
+  const handleTableReady = useCallback((table: any) => {
+    setTableInstance(table);
+  }, []);
 
   // Filter tickets
   const filteredTickets = useMemo(() => {
@@ -150,6 +157,7 @@ export function HelpDesk() {
     {
       accessorKey: 'ticketId',
       header: 'Ticket ID',
+      meta: { essential: true },
       cell: ({ row }) => (
         <span className="font-semibold text-sm font-mono">{row.original.ticketId}</span>
       ),
@@ -157,6 +165,7 @@ export function HelpDesk() {
     {
       accessorKey: 'subject',
       header: 'Subject',
+      meta: { essential: false },
       cell: ({ row }) => (
         <TruncatedText 
           text={row.original.subject} 
@@ -168,6 +177,7 @@ export function HelpDesk() {
     {
       accessorKey: 'category',
       header: 'Category',
+      meta: { headerAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900 capitalize">
           {row.original.category.replace('-', ' ')}
@@ -177,11 +187,13 @@ export function HelpDesk() {
     {
       accessorKey: 'priority',
       header: 'Priority',
-      cell: ({ row }) => <PriorityBadge priority={row.original.priority} />,
+      meta: { headerAlign: 'center', essential: false },
+      cell: ({ row }) => <div className="flex justify-center"><PriorityBadge priority={row.original.priority} /></div>,
     },
     {
       accessorKey: 'status',
       header: 'Status',
+      meta: { headerAlign: 'center', essential: true },
       cell: ({ row }) => {
         const status = row.original.status;
         const statusMap: Record<string, { type: 'success' | 'warning' | 'error' | 'info' | 'pending', label: string }> = {
@@ -192,12 +204,13 @@ export function HelpDesk() {
           'waiting-response': { type: 'warning', label: 'Waiting Response' },
         };
         const mapped = statusMap[status] || { type: 'pending' as const, label: status };
-        return <StatusBadge status={mapped.type} label={mapped.label} />;
+        return <div className="flex justify-center"><StatusBadge status={mapped.type} label={mapped.label} /></div>;
       },
     },
     {
       accessorKey: 'createdDate',
       header: 'Created',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.createdDate), 'MMM dd, yyyy')}
@@ -207,6 +220,7 @@ export function HelpDesk() {
     {
       accessorKey: 'assignedAgent',
       header: 'Assigned To',
+      meta: { essential: false },
       cell: ({ row }) => {
         const agent = getAgentDisplay(row.original.assignedAgent);
         return (
@@ -222,6 +236,7 @@ export function HelpDesk() {
     {
       accessorKey: 'updatedDate',
       header: 'Last Updated',
+      meta: { essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.updatedDate), 'MMM dd, yyyy')}
@@ -231,6 +246,7 @@ export function HelpDesk() {
     {
       accessorKey: 'responseTime',
       header: 'Response Time',
+      meta: { essential: false },
       cell: ({ row }) => {
         const responseTime = getTicketResponseTime(row.original);
         return (
@@ -243,6 +259,7 @@ export function HelpDesk() {
     {
       id: 'actions',
       header: 'Actions',
+      meta: { essential: true },
       cell: () => (
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm">
@@ -322,13 +339,6 @@ export function HelpDesk() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
-      <div className="flex items-center justify-end mb-2">
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          New Ticket
-        </Button>
-      </div>
-
       {/* Support Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
@@ -400,7 +410,12 @@ export function HelpDesk() {
               <Card>
                 <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Support Tickets ({filteredTickets.length})</CardTitle>
+                  <CardTitle className="flex items-center gap-2">
+                    Support Tickets
+                    <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                      {filteredTickets.length}
+                    </Badge>
+                  </CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -416,6 +431,13 @@ export function HelpDesk() {
                         </span>
                       )}
                     </Button>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Ticket
+                    </Button>
+                    {tableInstance && (
+                      <ColumnVisibilityToggle table={tableInstance} />
+                    )}
                   </div>
                 </div>
                 </CardHeader>
@@ -427,6 +449,8 @@ export function HelpDesk() {
                       pagination
                       pageSize={10}
                       searchable={false}
+                      storageKey="help-desk-tickets"
+                      onTableReady={handleTableReady}
                     />
                   ) : (
                     <EmptyState
@@ -443,7 +467,18 @@ export function HelpDesk() {
           <div className="lg:hidden mt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Support Tickets ({filteredTickets.length})</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    Support Tickets
+                    <Badge variant="warning" className="bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-100">
+                      {filteredTickets.length}
+                    </Badge>
+                  </CardTitle>
+                  <Button size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Ticket
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {filteredTickets.length > 0 ? (
