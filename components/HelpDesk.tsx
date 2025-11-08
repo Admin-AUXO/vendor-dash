@@ -12,7 +12,9 @@ import {
   Accordion,
   TruncatedText,
   ColumnVisibilityToggle,
+  TableActions,
   type FilterGroup,
+  type TableAction,
 } from './shared';
 import { 
   Headphones, 
@@ -21,7 +23,8 @@ import {
   AlertCircle,
   Plus,
   MessageSquare,
-  Filter
+  Filter,
+  Eye
 } from 'lucide-react';
 import { supportTickets, type SupportTicket } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
@@ -210,7 +213,7 @@ export function HelpDesk() {
     {
       accessorKey: 'createdDate',
       header: 'Created',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.createdDate), 'MMM dd, yyyy')}
@@ -236,7 +239,7 @@ export function HelpDesk() {
     {
       accessorKey: 'updatedDate',
       header: 'Last Updated',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.updatedDate), 'MMM dd, yyyy')}
@@ -259,14 +262,18 @@ export function HelpDesk() {
     {
       id: 'actions',
       header: 'Actions',
-      meta: { essential: true },
-      cell: () => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-        </div>
-      ),
+      meta: { essential: true, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        const primaryAction: TableAction = {
+          label: 'View',
+          icon: Eye,
+          onClick: () => {
+            console.log('View ticket:', row.original.ticketId);
+          },
+        };
+
+        return <TableActions primaryAction={primaryAction} />;
+      },
     },
   ], []);
 
@@ -339,27 +346,36 @@ export function HelpDesk() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
+      {/* Welcome Message */}
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">Manage support tickets, respond to customer inquiries, and access knowledge base articles.</p>
+      </div>
+
       {/* Support Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Open Tickets"
           value={supportStats.open}
           icon={AlertCircle}
+          tooltip="Support tickets currently open and awaiting response."
         />
         <StatCard
           title="In Progress"
           value={supportStats.inProgress}
           icon={Clock}
+          tooltip="Support tickets currently being worked on by agents."
         />
         <StatCard
           title="Resolved"
           value={supportStats.resolved}
           icon={CheckCircle}
+          tooltip="Total number of successfully resolved support tickets."
         />
         <StatCard
           title="Avg Response Time"
           value={formatResponseTime(supportStats.avgResponseTime)}
           icon={Headphones}
+          tooltip="Average time for your support team to respond to new tickets."
         />
       </div>
 

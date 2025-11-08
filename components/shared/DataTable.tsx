@@ -285,7 +285,7 @@ export function DataTable<TData>({
                   return (
                     <tr
                       key={row.id}
-                      className="hover:bg-muted transition-colors"
+                      className="group hover:bg-muted transition-colors"
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -311,7 +311,7 @@ export function DataTable<TData>({
                 rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-muted transition-colors"
+                    className="group hover:bg-muted transition-colors"
                   >
                       {row.getVisibleCells().map((cell) => {
                         const cellAlign = (cell.column.columnDef.meta as any)?.cellAlign || (cell.column.columnDef.meta as any)?.headerAlign || 'left';

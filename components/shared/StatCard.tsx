@@ -1,6 +1,12 @@
 import { LucideIcon } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { cn } from '../ui/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../ui/tooltip';
 
 interface StatCardProps {
   title: string;
@@ -9,6 +15,7 @@ interface StatCardProps {
   icon: LucideIcon;
   trend?: 'up' | 'down' | 'neutral';
   className?: string;
+  tooltip?: string;
 }
 
 /**
@@ -32,6 +39,7 @@ export function StatCard({
   icon: Icon,
   trend = 'neutral',
   className,
+  tooltip,
 }: StatCardProps) {
   const changeColor =
     trend === 'up'
@@ -40,7 +48,7 @@ export function StatCard({
       ? 'text-status-error'
       : 'text-gray-600';
 
-  return (
+  const cardContent = (
     <Card className={cn('border-0 shadow-md hover:shadow-lg transition-shadow h-full', className)}>
       <CardContent className="p-5 h-full flex flex-col">
         <div className="flex items-center justify-between gap-4 flex-1">
@@ -64,5 +72,22 @@ export function StatCard({
       </CardContent>
     </Card>
   );
+
+  if (tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {cardContent}
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            <p className="text-sm">{tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return cardContent;
 }
 

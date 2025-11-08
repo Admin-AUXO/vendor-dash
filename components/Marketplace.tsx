@@ -9,7 +9,9 @@ import {
   EmptyState,
   TruncatedText,
   ColumnVisibilityToggle,
+  TableActions,
   type FilterGroup,
+  type TableAction,
 } from './shared';
 import { 
   Briefcase, 
@@ -17,7 +19,10 @@ import {
   TrendingUp, 
   Target,
   Users,
-  Filter
+  Filter,
+  Eye,
+  Send,
+  X
 } from 'lucide-react';
 import { marketplaceProjects, bids, type MarketplaceProject, type Bid } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
@@ -169,7 +174,7 @@ export function Marketplace() {
     {
       accessorKey: 'budgetRange',
       header: 'Budget Range',
-      meta: { headerAlign: 'center', essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {formatCurrencyK(row.original.budgetMin)} - {formatCurrencyK(row.original.budgetMax)}
@@ -179,7 +184,7 @@ export function Marketplace() {
     {
       accessorKey: 'deadline',
       header: 'Deadline',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.deadline), 'MMM dd, yyyy')}
@@ -213,21 +218,45 @@ export function Marketplace() {
       },
     },
     {
+      id: 'submitBid',
+      header: 'Submit Bid',
+      meta: { essential: false, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        if (row.original.status === 'open') {
+          return (
+            <div className="flex justify-center">
+              <Button
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('Submit bid for project:', row.original.projectId);
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <Send className="w-4 h-4" />
+                Submit Bid
+              </Button>
+            </div>
+          );
+        }
+        return <span className="text-sm text-gray-400">—</span>;
+      },
+    },
+    {
       id: 'actions',
       header: 'Actions',
-      meta: { essential: true },
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-          {row.original.status === 'open' && (
-            <Button size="sm">
-              Submit Bid
-            </Button>
-          )}
-        </div>
-      ),
+      meta: { essential: true, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        const primaryAction: TableAction = {
+          label: 'View',
+          icon: Eye,
+          onClick: () => {
+            console.log('View project:', row.original.projectId);
+          },
+        };
+
+        return <TableActions primaryAction={primaryAction} />;
+      },
     },
   ], []);
 
@@ -280,7 +309,7 @@ export function Marketplace() {
     {
       accessorKey: 'proposedCost',
       header: 'Cost',
-      meta: { headerAlign: 'center', essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.proposedCost).format()}
@@ -312,7 +341,7 @@ export function Marketplace() {
     {
       accessorKey: 'submittedDate',
       header: 'Submitted',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.submittedDate), 'MMM dd, yyyy')}
@@ -337,21 +366,46 @@ export function Marketplace() {
       },
     },
     {
+      id: 'withdraw',
+      header: 'Withdraw',
+      meta: { essential: false, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        if (row.original.status === 'pending') {
+          return (
+            <div className="flex justify-center">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('Withdraw bid:', row.original.bidId);
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <X className="w-4 h-4" />
+                Withdraw
+              </Button>
+            </div>
+          );
+        }
+        return <span className="text-sm text-gray-400">—</span>;
+      },
+    },
+    {
       id: 'actions',
       header: 'Actions',
-      meta: { essential: true },
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-          {row.original.status === 'pending' && (
-            <Button variant="outline" size="sm">
-              Withdraw
-            </Button>
-          )}
-        </div>
-      ),
+      meta: { essential: true, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        const primaryAction: TableAction = {
+          label: 'View',
+          icon: Eye,
+          onClick: () => {
+            console.log('View bid:', row.original.bidId);
+          },
+        };
+
+        return <TableActions primaryAction={primaryAction} />;
+      },
     },
   ], []);
 
@@ -449,6 +503,10 @@ export function Marketplace() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
+      {/* Welcome Message */}
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">Discover new project opportunities, submit competitive bids, and track your bidding activity.</p>
+      </div>
 
       {/* Marketplace Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -456,11 +514,13 @@ export function Marketplace() {
           title="Available Projects"
           value={marketplaceStats.availableProjects}
           icon={Briefcase}
+          tooltip="Open projects available for bidding in the marketplace."
         />
         <StatCard
           title="My Bids"
           value={marketplaceStats.myBids}
           icon={FileCheck}
+          tooltip="Total number of bids you have submitted across all statuses."
         />
         <StatCard
           title="Won Bids"
@@ -468,11 +528,13 @@ export function Marketplace() {
           change={`${marketplaceStats.winRate}% win rate`}
           trend="up"
           icon={TrendingUp}
+          tooltip="Number of bids that have been accepted. Win rate shows your success percentage."
         />
         <StatCard
           title="Total Opportunity"
           value={currency(marketplaceStats.totalProjectValue).format()}
           icon={Target}
+          tooltip="Combined total value of all available open projects in the marketplace."
         />
       </div>
 

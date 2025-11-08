@@ -39,6 +39,8 @@ export { InboxWorkOrderCard } from './InboxWorkOrderCard';
 export { InboxPagination } from './InboxPagination';
 export { TruncatedText } from './TruncatedText';
 export { NavigationProvider, useNavigation } from './NavigationContext';
+export { TableActions } from './TableActions';
+export type { TableAction } from './TableActions';
 
 // Icons
 export * from './icons';

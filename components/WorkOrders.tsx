@@ -14,7 +14,9 @@ import {
   ColumnVisibilityToggle,
   InboxWorkOrderCard,
   InboxPagination,
+  TableActions,
   type FilterGroup,
+  type TableAction,
 } from './shared';
 import { 
   ClipboardList, 
@@ -23,7 +25,8 @@ import {
   AlertCircle,
   Plus,
   Filter,
-  Mail
+  Mail,
+  Eye
 } from 'lucide-react';
 import { workOrders as initialWorkOrders, type WorkOrder } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
@@ -48,7 +51,7 @@ export function WorkOrders() {
   const [awaitingResponsePage, setAwaitingResponsePage] = useState(0);
   const [myWorkOrdersPage, setMyWorkOrdersPage] = useState(0);
   const [rejectedPage, setRejectedPage] = useState(0);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   // Stable callback for table ready
   const handleTableReady = useCallback((table: any) => {
@@ -257,7 +260,7 @@ export function WorkOrders() {
     {
       accessorKey: 'dueDate',
       header: 'Due Date',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.dueDate), 'MMM dd, yyyy')}
@@ -267,7 +270,7 @@ export function WorkOrders() {
     {
       accessorKey: 'estimatedCost',
       header: 'Estimated Cost',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.estimatedCost).format()}
@@ -277,14 +280,18 @@ export function WorkOrders() {
     {
       id: 'actions',
       header: 'Actions',
-      meta: { essential: true },
-      cell: () => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-        </div>
-      ),
+      meta: { essential: true, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        const primaryAction: TableAction = {
+          label: 'View',
+          icon: Eye,
+          onClick: () => {
+            console.log('View work order:', row.original.workOrderId);
+          },
+        };
+
+        return <TableActions primaryAction={primaryAction} />;
+      },
     },
   ], []);
 
@@ -335,27 +342,36 @@ export function WorkOrders() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
+      {/* Welcome Message */}
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">Manage service requests, track progress, and coordinate work assignments across your team.</p>
+      </div>
+
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Pending"
           value={summaryStats.pending}
           icon={Clock}
+          tooltip="Work orders waiting to be assigned or started."
         />
         <StatCard
           title="In Progress"
           value={summaryStats.inProgress}
           icon={ClipboardList}
+          tooltip="Work orders currently being worked on by technicians."
         />
         <StatCard
           title="Completed"
           value={summaryStats.completed}
           icon={CheckCircle}
+          tooltip="Total number of successfully finished work orders."
         />
         <StatCard
           title="Overdue"
           value={summaryStats.overdue}
           icon={AlertCircle}
+          tooltip="Work orders that have exceeded their scheduled completion date."
         />
       </div>
 

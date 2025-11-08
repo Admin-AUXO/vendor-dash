@@ -9,7 +9,9 @@ import {
   ExportButton,
   EmptyState,
   ColumnVisibilityToggle,
+  TableActions,
   type FilterGroup,
+  type TableAction,
 } from './shared';
 import { 
   Tag, 
@@ -19,7 +21,8 @@ import {
   Building2,
   Wallet,
   Filter,
-  FileText
+  FileText,
+  Eye
 } from 'lucide-react';
 import { payments, invoices, type Payment, type Invoice } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
@@ -186,7 +189,7 @@ export function Payments() {
     {
       accessorKey: 'paymentDate',
       header: 'Payment Date',
-      meta: { headerAlign: 'center', essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm text-gray-900">
           {format(new Date(row.original.paymentDate), 'MMM dd, yyyy')}
@@ -196,7 +199,7 @@ export function Payments() {
     {
       accessorKey: 'amount',
       header: 'Amount',
-      meta: { headerAlign: 'center', essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.amount).format()}
@@ -249,14 +252,18 @@ export function Payments() {
     {
       id: 'actions',
       header: 'Actions',
-      meta: { essential: true },
-      cell: () => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            View
-          </Button>
-        </div>
-      ),
+      meta: { essential: true, headerAlign: 'center', cellAlign: 'center' },
+      cell: ({ row }) => {
+        const primaryAction: TableAction = {
+          label: 'View',
+          icon: Eye,
+          onClick: () => {
+            console.log('View payment:', row.original.paymentId);
+          },
+        };
+
+        return <TableActions primaryAction={primaryAction} />;
+      },
     },
   ], []);
 
@@ -308,22 +315,30 @@ export function Payments() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
+      {/* Welcome Message */}
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">Monitor payment transactions, track revenue, and manage financial records for your business.</p>
+      </div>
+
       {/* Financial Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Received"
           value={currency(financialSummary.totalReceived).format()}
           icon={Tag}
+          tooltip="Total amount of payments received across all time."
         />
         <StatCard
           title="Pending Payments"
           value={currency(financialSummary.pendingPayments).format()}
           icon={CreditCard}
+          tooltip="Payments currently being processed or awaiting confirmation."
         />
         <StatCard
           title="Outstanding Invoices"
           value={currency(financialSummary.outstandingInvoices).format()}
           icon={AlertCircle}
+          tooltip="Total amount of invoices that have not yet been paid."
         />
         <StatCard
           title="This Month"
@@ -331,6 +346,7 @@ export function Payments() {
           change="Current month"
           trend="up"
           icon={TrendingUp}
+          tooltip="Total revenue received during the current calendar month."
         />
       </div>
 

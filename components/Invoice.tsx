@@ -9,7 +9,9 @@ import {
   ExportButton,
   EmptyState,
   ColumnVisibilityToggle,
+  TableActions,
   type FilterGroup,
+  type TableAction,
 } from './shared';
 import { 
   FileText, 
@@ -202,7 +204,7 @@ export function Invoice() {
     {
       id: 'dates',
       header: 'Dates',
-      meta: { headerAlign: 'center', essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => {
         const issueDate = format(new Date(row.original.issueDate), 'MMM dd, yyyy');
         const dueDate = format(new Date(row.original.dueDate), 'MMM dd, yyyy');
@@ -239,7 +241,7 @@ export function Invoice() {
     {
       accessorKey: 'total',
       header: 'Amount',
-      meta: { essential: false },
+      meta: { headerAlign: 'center', cellAlign: 'center', essential: false },
       cell: ({ row }) => (
         <span className="text-sm font-medium text-gray-900">
           {currency(row.original.total).format()}
@@ -269,39 +271,55 @@ export function Invoice() {
     {
       id: 'actions',
       header: 'Actions',
-      meta: { essential: true },
+      meta: { essential: true, headerAlign: 'center', cellAlign: 'center' },
       cell: ({ row }) => {
         const invoice = row.original;
         const canEdit = invoice.status === 'draft' || invoice.status === 'sent' || invoice.status === 'viewed';
         const canSend = invoice.status === 'draft' || invoice.status === 'sent';
         const canDownload = invoice.status !== 'draft';
 
-        return (
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="h-8">
-              <Eye className="w-4 h-4 mr-1" />
-              View
-            </Button>
-            {canEdit && (
-              <Button variant="ghost" size="sm" className="h-8">
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-            )}
-            {canDownload && (
-              <Button variant="ghost" size="sm" className="h-8">
-                <Download className="w-4 h-4 mr-1" />
-                Download
-              </Button>
-            )}
-            {canSend && invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
-              <Button variant="ghost" size="sm" className="h-8">
-                <Send className="w-4 h-4 mr-1" />
-                Send
-              </Button>
-            )}
-          </div>
-        );
+        const primaryAction: TableAction = {
+          label: 'View',
+          icon: Eye,
+          onClick: () => {
+            // Handle view action
+            console.log('View invoice:', invoice.invoiceNumber);
+          },
+        };
+
+        const secondaryActions: TableAction[] = [];
+        
+        if (canEdit) {
+          secondaryActions.push({
+            label: 'Edit',
+            icon: Edit,
+            onClick: () => {
+              console.log('Edit invoice:', invoice.invoiceNumber);
+            },
+          });
+        }
+
+        if (canDownload) {
+          secondaryActions.push({
+            label: 'Download',
+            icon: Download,
+            onClick: () => {
+              console.log('Download invoice:', invoice.invoiceNumber);
+            },
+          });
+        }
+
+        if (canSend && invoice.status !== 'paid' && invoice.status !== 'cancelled') {
+          secondaryActions.push({
+            label: 'Send',
+            icon: Send,
+            onClick: () => {
+              console.log('Send invoice:', invoice.invoiceNumber);
+            },
+          });
+        }
+
+        return <TableActions primaryAction={primaryAction} secondaryActions={secondaryActions} />;
       },
     },
   ], [workOrderLookup]);
@@ -351,6 +369,11 @@ export function Invoice() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
+      {/* Welcome Message */}
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">Track invoices, monitor payment status, and manage billing for your service operations.</p>
+      </div>
+
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div 
@@ -370,6 +393,7 @@ export function Invoice() {
             title="Total Invoices"
             value={summaryStats.total.toString()}
             icon={FileText}
+            tooltip="Total count of all invoices across all statuses. Click to view all."
           />
         </div>
         <div 
@@ -390,6 +414,7 @@ export function Invoice() {
             value={currency(summaryStats.paidAmount).format()}
             change={`${summaryStats.paid} paid`}
             icon={Tag}
+            tooltip="Total amount received from paid invoices. Click to filter by paid invoices."
           />
         </div>
         <div 
@@ -410,6 +435,7 @@ export function Invoice() {
             value={currency(summaryStats.pendingAmount).format()}
             change={`${summaryStats.pending} pending`}
             icon={Clock}
+            tooltip="Total amount of invoices awaiting payment. Click to filter by pending invoices."
           />
         </div>
         <div 
@@ -431,6 +457,7 @@ export function Invoice() {
             change={`${summaryStats.overdue} overdue`}
             trend={summaryStats.overdue > 0 ? "down" : "neutral"}
             icon={AlertCircle}
+            tooltip="Total amount of invoices past their due date. Click to filter by overdue invoices."
           />
         </div>
       </div>

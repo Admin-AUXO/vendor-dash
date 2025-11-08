@@ -129,6 +129,10 @@ export function Overview() {
 
   return (
     <div className="p-4 lg:p-6 xl:p-8 space-y-4 lg:space-y-6 bg-gray-50 min-h-screen">
+      {/* Welcome Message */}
+      <div className="mb-2">
+        <p className="text-sm text-gray-600">Monitor your service operations, track performance metrics, and stay on top of urgent work orders.</p>
+      </div>
 
       {/* KPI Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
@@ -138,6 +142,7 @@ export function Overview() {
           change={`${metrics.pendingWorkOrders} pending`}
           trend="up"
           icon={ClipboardList}
+          tooltip="Work orders currently in progress, including pending, assigned, or active statuses."
         />
         <StatCard
           title="Monthly Revenue"
@@ -145,6 +150,7 @@ export function Overview() {
           change="+12% from last month"
           trend="up"
           icon={Tag}
+          tooltip="Total revenue this month from completed work orders and paid invoices."
         />
         <StatCard
           title="Outstanding Invoices"
@@ -152,6 +158,7 @@ export function Overview() {
           change={`${metrics.overdueInvoices} overdue`}
           trend={metrics.overdueInvoices > 0 ? "down" : "neutral"}
           icon={FileText}
+          tooltip="Total amount of unpaid invoices across all statuses."
         />
         <StatCard
           title="Completion Rate"
@@ -159,6 +166,7 @@ export function Overview() {
           change="On-time: 92%"
           trend="up"
           icon={TrendingUp}
+          tooltip="Percentage of work orders completed successfully, including on-time completions."
         />
       </div>
 
