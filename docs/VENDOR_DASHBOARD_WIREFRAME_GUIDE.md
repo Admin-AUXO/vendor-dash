@@ -53,10 +53,10 @@ Provide vendors with a comprehensive snapshot of their business performance, key
 - View reports
 
 #### Charts & Visualizations
-- **Revenue Trend**: Line chart showing revenue over time (weekly/monthly)
-- **Service Distribution**: Pie/Donut chart showing distribution of services
-- **Work Order Status**: Bar chart showing status breakdown
-- **Performance Trends**: Comparison charts (month-over-month, year-over-year)
+- **Revenue Trend**: Line chart showing revenue over time with average reference line
+- **Service Distribution**: Bar chart showing distribution of services (sorted by value)
+- **No charts on Invoice/Payments pages**: Removed per design requirements
+- **Performance Trends**: Enhanced line charts with optimized axis labels
 
 ### Use Cases
 1. **Daily Check-in**: Vendor opens dashboard to see today's priorities
@@ -67,11 +67,13 @@ Provide vendors with a comprehensive snapshot of their business performance, key
 
 ### Reusable Elements
 - StatCard (for KPIs)
-- ActivityTimeline (for recent activity)
-- AlertCard (for notifications)
-- QuickActionButton (for quick actions)
-- Chart components (Line, Bar, Pie)
+- Timeline (for recent activity)
+- WorkOrderCard (for urgent work orders)
+- Chart components (Line with averages, Bar charts)
 - StatusBadge (for status indicators)
+- PriorityBadge (for priority indicators)
+
+**Note**: Page titles are displayed in the top header, not on individual screens.
 
 ---
 
@@ -227,9 +229,7 @@ Create, track, and manage invoices. Handle invoice lifecycle from creation to pa
 - Actions (Edit, Send, Mark Paid, Export PDF, Cancel)
 
 #### Charts
-- **Revenue Timeline**: Line chart showing invoice amounts over time
-- **Status Distribution**: Pie chart showing invoice status breakdown
-- **Payment Trends**: Bar chart showing payment patterns
+- **No Charts**: Charts removed from Invoice page per design requirements
 
 ### Use Cases
 1. **Invoice Creation**: Create new invoices from work orders
@@ -241,14 +241,12 @@ Create, track, and manage invoices. Handle invoice lifecycle from creation to pa
 
 ### Reusable Elements
 - DataTable (for invoice list)
-- SearchBar (for searching)
-- FilterPanel (for filtering)
+- FilterSystem, FilterSidebar (responsive filtering)
 - StatusBadge (for status)
-- InvoiceForm (for creating/editing)
-- PDFPreview (for invoice preview)
-- Chart components (Line, Bar, Pie)
 - ExportButton (for exporting)
-- DateRangePicker (for date filtering)
+- StatCard (for summary statistics)
+
+**Note**: Page titles are displayed in the top header, not on individual screens.
 
 ---
 
@@ -305,9 +303,7 @@ Track and manage payment transactions. Monitor cash flow and payment history.
   - Bank Details (if applicable)
 
 #### Charts
-- **Payment Timeline**: Line chart showing payments over time
-- **Payment Methods**: Pie chart showing payment method distribution
-- **Revenue Trends**: Bar chart comparing periods
+- **No Charts**: Charts removed from Payments page per design requirements
 
 ### Use Cases
 1. **Payment Recording**: Record payments received
@@ -319,14 +315,12 @@ Track and manage payment transactions. Monitor cash flow and payment history.
 
 ### Reusable Elements
 - DataTable (for payment list)
-- SearchBar (for searching)
-- FilterPanel (for filtering)
+- FilterSystem, FilterSidebar (responsive filtering)
 - StatusBadge (for status)
-- PaymentForm (for recording payments)
-- Chart components (Line, Bar, Pie)
 - ExportButton (for exporting)
-- DateRangePicker (for date filtering)
-- FileUpload (for receipts)
+- StatCard (for summary statistics)
+
+**Note**: Page titles are displayed in the top header, not on individual screens.
 
 ---
 
@@ -587,10 +581,9 @@ Access support, manage support tickets, and find solutions through knowledge bas
 - **PrintButton**: Print button
 
 ### Chart Components
-- **LineChart**: Line chart for trends
-- **BarChart**: Bar chart for comparisons
-- **PieChart**: Pie chart for distributions
-- **AreaChart**: Area chart for cumulative data
+- **LineChart**: Line chart for trends (with average reference lines)
+- **BarChart**: Bar chart for comparisons and distributions (preferred over pie charts)
+- **Enhanced Features**: Optimized axis labels, tooltips, responsive design
 
 ---
 

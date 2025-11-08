@@ -124,5 +124,18 @@ export {
   CollapsibleContent,
 } from './collapsible';
 
+export {
+  Drawer,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerDescription,
+} from './sheet';
+
 export { cn } from './utils';
 

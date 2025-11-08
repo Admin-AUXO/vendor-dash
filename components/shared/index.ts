@@ -5,6 +5,11 @@ export { PriorityBadge } from './PriorityBadge';
 export type { PriorityLevel } from './PriorityBadge';
 export { SearchBar } from './SearchBar';
 export { FilterPanel } from './FilterPanel';
+export { FilterBar } from './FilterBar';
+export { AdvancedFilterPanel } from './AdvancedFilterPanel';
+export type { FilterGroup, FilterOption } from './AdvancedFilterPanel';
+export { FilterSystem, FilterSidebar } from './FilterSystem';
+export type { FilterSystemProps } from './FilterSystem';
 export { DataTable } from './DataTable';
 export { FileUpload } from './FileUpload';
 export { ExportButton } from './ExportButton';
@@ -22,6 +27,7 @@ export type { NavItem } from './Sidebar';
 export { TopHeader } from './TopHeader';
 export { UserProfile } from './UserProfile';
 export { DashboardLayout } from './DashboardLayout';
+export { WorkOrderCard } from './WorkOrderCard';
 
 // Icons
 export * from './icons';

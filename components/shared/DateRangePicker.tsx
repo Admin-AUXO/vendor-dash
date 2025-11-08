@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Calendar, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';

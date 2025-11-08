@@ -48,26 +48,26 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'w-72 bg-white border-r border-border flex flex-col shadow-sm',
+        'w-64 bg-white border-r border-border flex flex-col shadow-sm',
         className
       )}
     >
       {/* Logo/Brand Section */}
       {logo && (
-        <div className="p-6 border-b border-border">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center gap-3">
             {logo.icon ? (
               logo.icon
             ) : (
               <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: 'var(--gold-400)' }}
               >
-                <span className="text-black font-bold text-lg">PV</span>
+                <span className="text-black font-bold text-base">PV</span>
               </div>
             )}
             <div>
-              <h1 className="text-black font-bold text-lg">{logo.text}</h1>
+              <h1 className="text-black font-bold text-base">{logo.text}</h1>
               {logo.subtitle && (
                 <p className="text-gray-500 text-xs">{logo.subtitle}</p>
               )}
@@ -77,8 +77,8 @@ export function Sidebar({
       )}
 
       {/* Navigation Items */}
-      <nav className="flex-1 p-4 overflow-y-auto">
-        <ul className="space-y-1">
+      <nav className="flex-1 p-3 overflow-y-auto">
+        <ul className="space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeItem === item.id;
@@ -90,7 +90,7 @@ export function Sidebar({
                   onClick={() => !isDisabled && onItemClick(item.id)}
                   disabled={isDisabled}
                   className={cn(
-                    'w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all font-medium text-left',
+                    'w-full flex items-center justify-between gap-2 px-3 py-3.5 rounded-lg transition-all font-medium text-left text-base',
                     'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
                     isActive
                       ? 'text-black shadow-sm'
@@ -126,7 +126,7 @@ export function Sidebar({
 
       {/* Footer Section */}
       {footer && (
-        <div className="p-4 border-t border-border">{footer}</div>
+        <div className="p-3 border-t border-border">{footer}</div>
       )}
     </aside>
   );

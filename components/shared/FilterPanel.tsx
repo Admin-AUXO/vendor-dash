@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { cn } from '../ui/utils';
 
@@ -23,7 +23,8 @@ interface FilterPanelProps {
 }
 
 export function FilterPanel({ filters, onFilterChange, className, collapsible = true }: FilterPanelProps) {
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(filters.map((f) => f.id)));
+  // Start with all groups collapsed by default to save space
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [filterValues, setFilterValues] = useState<Record<string, string | string[]>>(
     Object.fromEntries(filters.map((f) => [f.id, f.value || (f.type === 'checkbox' ? [] : '')]))
   );
@@ -74,7 +75,7 @@ export function FilterPanel({ filters, onFilterChange, className, collapsible = 
   );
 
   return (
-    <div className={cn('bg-white border border-border rounded-lg p-4 space-y-4', className)}>
+    <div className={cn('bg-white border border-border rounded-lg p-3 space-y-3', className)}>
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">Filters</h3>
         {hasActiveFilters && (

@@ -1,5 +1,4 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
 import { Sidebar, NavItem, TopHeader, UserProfile } from './index';
 
 interface DashboardLayoutProps {
@@ -21,20 +20,12 @@ interface DashboardLayoutProps {
   };
   header?: {
     title?: string;
-    breadcrumbs?: Array<{ label: string; href?: string }>;
-    search?: {
-      placeholder?: string;
-      value?: string;
-      onChange?: (value: string) => void;
-    };
     notifications?: {
       count?: number;
       onClick?: () => void;
     };
     actions?: React.ReactNode;
   };
-  darkMode?: boolean;
-  onDarkModeToggle?: () => void;
   className?: string;
 }
 
@@ -62,9 +53,6 @@ export function DashboardLayout({
   logo,
   user,
   header,
-  darkMode = false,
-  onDarkModeToggle,
-  className,
 }: DashboardLayoutProps) {
   return (
     <div className="flex h-screen bg-gray-50">
@@ -94,13 +82,9 @@ export function DashboardLayout({
         {header && (
           <TopHeader
             title={header.title}
-            breadcrumbs={header.breadcrumbs}
-            search={header.search}
             notifications={header.notifications}
             user={user}
             actions={header.actions}
-            darkMode={darkMode}
-            onDarkModeToggle={onDarkModeToggle}
           />
         )}
 

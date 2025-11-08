@@ -35,14 +35,14 @@ export function StatCard({
 }: StatCardProps) {
   const changeColor =
     trend === 'up'
-      ? 'text-green-600'
+      ? 'text-status-success'
       : trend === 'down'
-      ? 'text-red-600'
+      ? 'text-status-error'
       : 'text-gray-600';
 
   return (
     <Card className={cn('border-0 shadow-md hover:shadow-lg transition-shadow', className)}>
-      <CardContent className="p-6">
+      <CardContent className="p-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-sm text-gray-500 mb-1 font-medium">{title}</p>
