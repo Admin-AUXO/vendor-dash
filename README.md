@@ -48,21 +48,13 @@ This project is automatically deployed to GitHub Pages using GitHub Actions. The
 │   ├── generators.ts  # Data generation functions
 │   └── index.ts       # Main data export
 ├── docs/              # Documentation
-│   ├── NEXT_STEPS.md  # Implementation roadmap
-│   ├── VENDOR_DASHBOARD_WIREFRAME_GUIDE.md
-│   ├── THEME_DOCUMENTATION.md
-│   ├── REUSABLE_COMPONENTS.md
-│   └── ...
+│   ├── README.md     # README Doc
 ├── styles/            # Global styles
 └── public/           # Static assets
 ```
 
 ## Documentation
 
-- **[Next Steps](./docs/NEXT_STEPS.md)** - Implementation roadmap and next steps
-- **[Wireframe Guide](./docs/VENDOR_DASHBOARD_WIREFRAME_GUIDE.md)** - Complete wireframe specifications
-- **[Theme Documentation](./docs/THEME_DOCUMENTATION.md)** - Theme system and styling guide
-- **[Reusable Components](./docs/REUSABLE_COMPONENTS.md)** - Component library documentation
 - **[Data Documentation](./data/README.md)** - Data structure and usage guide
 
 ## Technologies
