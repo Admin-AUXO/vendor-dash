@@ -36,7 +36,7 @@ import { invoices, workOrders, type Invoice } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import currency from 'currency.js';
-import { DateRange } from 'react-day-picker';
+import { DateRange } from './shared/DateRangePicker';
 import { cn } from './ui/utils';
 
 

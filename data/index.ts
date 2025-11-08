@@ -18,14 +18,14 @@ import { generateDashboardMetrics } from './generators';
 import { generateTimeSeriesData, generateKnowledgeBaseArticles } from './generators';
 
 // Generate all data
-const workOrders = generateWorkOrders(50);
-const invoices = generateInvoices(workOrders, 40);
-const payments = generatePayments(invoices, 35);
-const marketplaceProjects = generateMarketplaceProjects(30);
-const bids = generateBids(marketplaceProjects, 25);
-const supportTickets = generateSupportTickets(20);
+const workOrders = generateWorkOrders(40);
+const invoices = generateInvoices(workOrders, 50);
+const payments = generatePayments(invoices, 30);
+const marketplaceProjects = generateMarketplaceProjects(20);
+const bids = generateBids(marketplaceProjects, 30);
+const supportTickets = generateSupportTickets(10);
 const clients = generateClients(10);
-const activities = generateActivities(workOrders, invoices, payments, bids, supportTickets, 100);
+const activities = generateActivities(workOrders, invoices, payments, bids, supportTickets, 60);
 const notifications = generateNotifications(workOrders, invoices, 15);
 const vendor = generateVendor();
 const metrics = generateDashboardMetrics(workOrders, invoices, payments, bids, supportTickets);

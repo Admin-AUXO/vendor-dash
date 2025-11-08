@@ -7,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import * as XLSX from 'xlsx';
 
 interface ExportButtonProps {
   data: any[];
@@ -26,11 +25,13 @@ export function ExportButton({
 }: ExportButtonProps) {
   const [exporting, setExporting] = useState(false);
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     if (data.length === 0) return;
 
     setExporting(true);
     try {
+      // Dynamically import xlsx only when needed
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const csv = XLSX.utils.sheet_to_csv(ws);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -49,11 +50,13 @@ export function ExportButton({
     }
   };
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (data.length === 0) return;
 
     setExporting(true);
     try {
+      // Dynamically import xlsx only when needed
+      const XLSX = await import('xlsx');
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');

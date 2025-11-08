@@ -743,179 +743,211 @@
 }
 
 /* ============================================
-   CALENDAR DATE RANGE PICKER STYLES
+   REACT-DATE-RANGE CALENDAR STYLES
    ============================================ */
 
 @layer components {
-  /* Ensure proper alignment for calendar cells and headers */
-  .rdp-cell {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 2.25rem !important;
-    min-width: 2.25rem !important;
-    max-width: 2.25rem !important;
-    height: 2.25rem !important;
-    min-height: 2.25rem !important;
-    max-height: 2.25rem !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    position: relative;
-    flex-shrink: 0;
+  /* Override react-date-range default styles to match our design system */
+  .rdr-calendar-wrapper {
+    font-family: var(--font-sans);
+    color: var(--foreground);
   }
 
-  .rdp-head_cell {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 2.25rem !important;
-    min-width: 2.25rem !important;
-    max-width: 2.25rem !important;
-    height: 2.25rem !important;
-    min-height: 2.25rem !important;
-    max-height: 2.25rem !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  /* Calendar container */
+  .rdr-DateRangePicker {
+    background: white;
+    border-radius: var(--radius);
+  }
+
+  /* Month container */
+  .rdr-Month {
+    padding: 1rem;
+  }
+
+  /* Weekday headers - ensure proper alignment */
+  .rdr-WeekDays {
+    display: flex;
+    width: 100%;
+  }
+
+  .rdr-WeekDay {
+    flex: 1;
+    text-align: center;
     font-weight: 500;
-    flex-shrink: 0;
+    font-size: var(--font-size-xs);
+    color: var(--gray-600);
+    padding: 0.5rem 0;
+    min-width: 2.25rem;
   }
 
-  /* Ensure calendar rows are properly aligned */
-  .rdp-row {
-    display: flex !important;
-    width: 100% !important;
-    margin-top: 0.125rem !important;
-    margin-bottom: 0 !important;
-    gap: 0 !important;
+  /* Calendar rows */
+  .rdr-Days {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
   }
 
-  /* Fix table alignment */
-  .rdp-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    table-layout: fixed !important;
+  /* Day cells - ensure consistent sizing */
+  .rdr-Day {
+    flex: 0 0 calc(100% / 7);
+    min-width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-sm);
+    position: relative;
   }
 
-  /* Ensure day buttons are properly sized and aligned */
-  .rdp-day {
-    width: 2.25rem !important;
-    min-width: 2.25rem !important;
-    max-width: 2.25rem !important;
-    height: 2.25rem !important;
-    min-height: 2.25rem !important;
-    max-height: 2.25rem !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+  .rdr-DayNumber {
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 0.375rem;
-    flex-shrink: 0;
-    line-height: 1 !important;
+    transition: all var(--transition-fast);
   }
 
-  /* Date Range Selection Styling - using class names from calendar component */
-  .day-range-start,
-  button.day-range-start {
+  /* Selected date range styling */
+  .rdr-DayStartOfMonth .rdr-DayNumber,
+  .rdr-DayEndOfMonth .rdr-DayNumber {
+    background-color: transparent;
+  }
+
+  /* Range start and end dates */
+  .rdr-DayStartOfWeek .rdr-DayNumber,
+  .rdr-DayEndOfWeek .rdr-DayNumber,
+  .rdr-DayStartOfMonth .rdr-DayNumber,
+  .rdr-DayEndOfMonth .rdr-DayNumber {
+    border-radius: 0.375rem;
+  }
+
+  /* Selected range background - ensure it's visible */
+  .rdr-InRange {
+    background-color: rgba(247, 214, 4, 0.15) !important;
+    color: var(--foreground) !important;
+  }
+
+  /* Range start date */
+  .rdr-DayStartOfRange .rdr-DayNumber,
+  .rdr-DayStartOfRange.rdr-DayToday .rdr-DayNumber {
     background-color: var(--primary) !important;
     color: var(--primary-foreground) !important;
-    font-weight: 600;
+    font-weight: 600 !important;
     border-top-left-radius: 0.375rem !important;
     border-bottom-left-radius: 0.375rem !important;
     border-top-right-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
+    border: none !important;
   }
 
-  .day-range-end,
-  button.day-range-end {
+  /* Range end date */
+  .rdr-DayEndOfRange .rdr-DayNumber,
+  .rdr-DayEndOfRange.rdr-DayToday .rdr-DayNumber {
     background-color: var(--primary) !important;
     color: var(--primary-foreground) !important;
-    font-weight: 600;
+    font-weight: 600 !important;
     border-top-right-radius: 0.375rem !important;
     border-bottom-right-radius: 0.375rem !important;
     border-top-left-radius: 0 !important;
     border-bottom-left-radius: 0 !important;
+    border: none !important;
   }
 
-  /* When start and end are the same day */
-  .day-range-start.day-range-end,
-  button.day-range-start.day-range-end {
+  /* Single day selection (start and end are the same) */
+  .rdr-DayStartOfRange.rdr-DayEndOfRange .rdr-DayNumber {
     border-radius: 0.375rem !important;
+    border: none !important;
   }
 
-  /* Range Middle - lighter background, no border radius */
-  .day-range-middle,
-  button.day-range-middle {
-    background-color: transparent !important;
-    color: var(--foreground) !important;
-    border-radius: 0 !important;
+  /* Hover states */
+  .rdr-Day:hover .rdr-DayNumber:not(.rdr-DayDisabled .rdr-DayNumber) {
+    background-color: rgba(247, 214, 4, 0.1) !important;
   }
 
-  /* Hover states for range selection */
-  .day-range-start:hover:not(:disabled),
-  .day-range-end:hover:not(:disabled),
-  button.day-range-start:hover:not(:disabled),
-  button.day-range-end:hover:not(:disabled) {
+  .rdr-DayStartOfRange:hover .rdr-DayNumber,
+  .rdr-DayEndOfRange:hover .rdr-DayNumber {
     background-color: var(--primary-hover) !important;
-    color: var(--primary-foreground) !important;
   }
 
-  .day-range-middle:hover:not(:disabled),
-  button.day-range-middle:hover:not(:disabled) {
-    background-color: rgba(247, 214, 4, 0.25) !important;
+  /* Today's date */
+  .rdr-DayToday .rdr-DayNumber {
+    background-color: var(--accent) !important;
+    color: var(--accent-foreground) !important;
+    font-weight: 600;
+    border: 1px solid var(--primary);
   }
 
-  /* Cell background for range selection - this creates the visual connection */
-  /* Cells that are part of a range (have aria-selected and background style) */
-  .rdp-cell[aria-selected="true"][style*="background"] {
-    background-color: rgba(247, 214, 4, 0.15) !important;
+  /* Disabled dates */
+  .rdr-DayDisabled {
+    opacity: 0.3;
+    cursor: not-allowed;
   }
 
-  /* Cells with range start - ensure proper styling */
-  .rdp-cell:has(.day-range-start):not(:has(.day-range-end)) {
-    border-top-left-radius: 0.375rem !important;
-    border-bottom-left-radius: 0.375rem !important;
-    background-color: transparent !important;
+  .rdr-DayDisabled .rdr-DayNumber {
+    color: var(--muted-foreground);
   }
 
-  /* Cells with range end - ensure proper styling */
-  .rdp-cell:has(.day-range-end):not(:has(.day-range-start)) {
-    border-top-right-radius: 0.375rem !important;
-    border-bottom-right-radius: 0.375rem !important;
-    background-color: transparent !important;
+  /* Outside month dates */
+  .rdr-DayPassive {
+    opacity: 0.4;
   }
 
-  /* Cells with both start and end (single day selection) */
-  .rdp-cell:has(.day-range-start.day-range-end) {
-    background-color: transparent !important;
-  }
-
-  /* Ensure range start and end buttons have primary background */
-  .rdp-cell:has(.day-range-start) .rdp-day.day-range-start,
-  .rdp-cell:has(.day-range-end) .rdp-day.day-range-end {
-    background-color: var(--primary) !important;
-    color: var(--primary-foreground) !important;
-  }
-
-  /* Range middle buttons should be transparent to show cell background */
-  .rdp-cell:has(.day-range-middle) .rdp-day.day-range-middle {
-    background-color: transparent !important;
-  }
-
-  /* Ensure cells in the middle of a range show the background */
-  .rdp-cell:has(.day-range-middle) {
-    background-color: rgba(247, 214, 4, 0.15) !important;
-  }
-
-  /* Fix spacing between months when side by side */
-  .rdp-months {
+  /* Month navigation */
+  .rdr-MonthAndYearWrapper {
+    padding: 0.75rem 0;
     display: flex;
-    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  @media (max-width: 640px) {
-    .rdp-months {
+  .rdr-MonthAndYearPickers {
+    font-weight: 600;
+    font-size: var(--font-size-base);
+    color: var(--foreground);
+  }
+
+  .rdr-NextPrevButton {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .rdr-NextPrevButton:hover {
+    background-color: var(--muted);
+    border-color: var(--primary);
+  }
+
+  /* Prevent conflicts with other calendar libraries */
+  .rdr-calendar-wrapper * {
+    box-sizing: border-box;
+  }
+
+  /* Ensure proper spacing between months */
+  .rdr-Months {
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .rdr-Months {
       flex-direction: column;
+      gap: 1rem;
     }
+  }
+
+  /* Override any conflicting styles from react-day-picker if present */
+  .rdr-calendar-wrapper .rdp-cell,
+  .rdr-calendar-wrapper .rdp-head_cell,
+  .rdr-calendar-wrapper .rdp-day {
+    all: unset;
   }
 }

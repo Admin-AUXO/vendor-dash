@@ -28,7 +28,7 @@ import { payments, invoices, workOrders, type Payment, type Invoice } from '../d
 import { ColumnDef } from '@tanstack/react-table';
 import { format, subDays, startOfDay, endOfDay, eachDayOfInterval } from 'date-fns';
 import currency from 'currency.js';
-import { DateRange } from 'react-day-picker';
+import { DateRange } from './shared/DateRangePicker';
 import {
   PieChart,
   Pie,

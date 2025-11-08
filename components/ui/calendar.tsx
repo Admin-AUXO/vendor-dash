@@ -1,71 +1,121 @@
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
-
+import { DateRange, RangeKeyDict } from "react-date-range"
+import { enGB, enUS } from "date-fns/locale"
 import { cn } from "./utils"
-import { buttonVariants } from "./button"
 
-export type CalendarProps = React.ComponentProps<typeof DayPicker>
+// Import react-date-range styles
+import "react-date-range/dist/styles.css"
+import "react-date-range/dist/theme/default.css"
+
+export interface CalendarProps {
+  ranges?: Array<{
+    startDate?: Date
+    endDate?: Date
+    key?: string
+  }>
+  onChange?: (ranges: RangeKeyDict) => void
+  onRangeChange?: (ranges: RangeKeyDict) => void
+  months?: number
+  direction?: "horizontal" | "vertical"
+  weekStartsOn?: 0 | 1 // 0 = Sunday, 1 = Monday
+  showMonthAndYearPickers?: boolean
+  showDateDisplay?: boolean
+  className?: string
+  minDate?: Date
+  maxDate?: Date
+  disabledDates?: Date[]
+  date?: Date
+  onDateChange?: (date: Date) => void
+  mode?: "single" | "range"
+}
 
 function Calendar({
+  ranges = [],
+  onChange,
+  onRangeChange,
+  months = 2,
+  direction = "horizontal",
+  weekStartsOn = 1, // Default to Monday
+  showMonthAndYearPickers = true,
+  showDateDisplay = false,
   className,
-  classNames,
-  showOutsideDays = true,
+  minDate,
+  maxDate,
+  disabledDates,
+  date,
+  onDateChange,
+  mode = "range",
   ...props
 }: CalendarProps) {
+  // Determine locale based on weekStartsOn
+  // enGB starts on Monday (1), enUS starts on Sunday (0)
+  const locale = weekStartsOn === 0 ? enUS : enGB
+
+  // Handle single date mode
+  if (mode === "single" && date && onDateChange) {
+    const singleRange = [{
+      startDate: date,
+      endDate: date,
+      key: "selection"
+    }]
+
+    return (
+      <div className={cn("rdr-calendar-wrapper", className)}>
+        <DateRange
+          ranges={singleRange}
+          onChange={(item: RangeKeyDict) => {
+            if (item.selection.startDate) {
+              onDateChange(item.selection.startDate)
+            }
+          }}
+          months={1}
+          direction={direction}
+          locale={locale}
+          showMonthAndYearPickers={showMonthAndYearPickers}
+          showDateDisplay={showDateDisplay}
+          minDate={minDate}
+          maxDate={maxDate}
+          disabledDates={disabledDates}
+          {...props}
+        />
+      </div>
+    )
+  }
+
+  // Handle range mode
+  const handleChange = (item: RangeKeyDict) => {
+    if (onRangeChange) {
+      onRangeChange(item)
+    }
+    if (onChange) {
+      onChange(item)
+    }
+  }
+
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
-      classNames={{
-        months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
-        month: "space-y-4",
-        caption: "flex justify-center pt-1 relative items-center",
-        caption_label: "text-sm font-medium",
-        nav: "space-x-1 flex items-center",
-        nav_button: cn(
-          buttonVariants({ variant: "outline" }),
-          "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-        ),
-        nav_button_previous: "absolute left-1",
-        nav_button_next: "absolute right-1",
-        table: "w-full border-collapse",
-        head_row: "flex",
-        head_cell:
-          "text-muted-foreground rounded-md w-9 h-9 font-normal text-[0.8rem] flex items-center justify-center",
-        row: "flex w-full mt-1",
-        cell: "h-9 w-9 text-center text-sm p-0 relative flex items-center justify-center [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-range-start)]:rounded-l-md [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected])]:bg-accent/20 focus-within:relative focus-within:z-20",
-        day: cn(
-          buttonVariants({ variant: "ghost" }),
-          "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
-        ),
-        day_range_start: "day-range-start",
-        day_range_end: "day-range-end",
-        day_selected:
-          "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground",
-        day_today: "bg-accent text-accent-foreground font-semibold",
-        day_outside:
-          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
-        day_disabled: "text-muted-foreground opacity-50 cursor-not-allowed",
-        day_range_middle: "day-range-middle",
-        day_hidden: "invisible",
-        ...classNames,
-      }}
-      modifiersClassNames={{
-        range_start: "day-range-start",
-        range_end: "day-range-end",
-        range_middle: "day-range-middle",
-        selected: "day-selected",
-      }}
-      components={{
-        PreviousMonthButton: () => <ChevronLeft className="h-4 w-4" />,
-        NextMonthButton: () => <ChevronRight className="h-4 w-4" />,
-      }}
-      {...props}
-    />
+    <div className={cn("rdr-calendar-wrapper", className)}>
+      <DateRange
+        ranges={ranges}
+        onChange={handleChange}
+        months={months}
+        direction={direction}
+        locale={locale}
+        showMonthAndYearPickers={showMonthAndYearPickers}
+        showDateDisplay={showDateDisplay}
+        showSelectionPreview={true}
+        moveRangeOnFirstSelection={false}
+        retainEndDateOnFirstSelection={true}
+        editableDateInputs={false}
+        dragSelectionEnabled={true}
+        rangeColors={['var(--primary)']}
+        minDate={minDate}
+        maxDate={maxDate}
+        disabledDates={disabledDates}
+        {...props}
+      />
+    </div>
   )
 }
+
 Calendar.displayName = "Calendar"
 
 export { Calendar }
-

@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Calendar, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { DateRange } from 'react-day-picker';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
 import { Calendar as CalendarComponent } from '../ui/calendar';
@@ -10,6 +9,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '../ui/popover';
+import { RangeKeyDict } from 'react-date-range';
+
+export interface DateRange {
+  from?: Date | null | undefined;
+  to?: Date | null | undefined;
+}
 
 interface DateRangePickerProps {
   onDateRangeChange: (range: DateRange | undefined) => void;
@@ -33,14 +38,66 @@ export function DateRangePicker({
   const date = controlledValue !== undefined ? controlledValue : internalDate;
   const isControlled = controlledValue !== undefined;
 
-  const handleDateChange = (range: DateRange | undefined) => {
-    if (!isControlled) {
-      setInternalDate(range);
+  // Convert DateRange to react-date-range format
+  const ranges = useMemo(() => {
+    if (!date?.from && !date?.to) {
+      return [{ startDate: undefined, endDate: undefined, key: 'selection' }];
     }
-    onDateRangeChange(range);
-    if (range?.from && range?.to) {
+    
+    return [{
+      startDate: date.from || undefined,
+      endDate: date.to || undefined,
+      key: 'selection' as const
+    }];
+  }, [date]);
+
+  const handleDateChange = (ranges: RangeKeyDict) => {
+    const selection = ranges.selection;
+    let newRange: DateRange;
+
+    // If both startDate and endDate are provided and they're the same,
+    // react-date-range is indicating a single date selection (start of range)
+    // Only set the start date in this case
+    if (selection.startDate && selection.endDate) {
+      const startTime = selection.startDate.getTime();
+      const endTime = selection.endDate.getTime();
+      
+      if (startTime === endTime) {
+        // Both dates are the same - this is a start date selection only
+        newRange = {
+          from: selection.startDate,
+          to: undefined,
+        };
+      } else {
+        // Different dates - both are set, range is complete
+        newRange = {
+          from: selection.startDate,
+          to: selection.endDate,
+        };
+      }
+    } else if (selection.startDate) {
+      // Only startDate is set
+      newRange = {
+        from: selection.startDate,
+        to: undefined,
+      };
+    } else {
+      // No date selected (shouldn't happen, but handle it)
+      newRange = {
+        from: undefined,
+        to: undefined,
+      };
+    }
+
+    // If both dates are selected and different, close the picker
+    if (newRange.from && newRange.to) {
       setIsOpen(false);
     }
+
+    if (!isControlled) {
+      setInternalDate(newRange);
+    }
+    onDateRangeChange(newRange);
   };
 
   const handleClear = () => {
@@ -59,7 +116,7 @@ export function DateRangePicker({
             disabled={disabled}
             className={cn(
               'w-full justify-start text-left font-normal',
-              !date && 'text-muted-foreground'
+              !date?.from && 'text-muted-foreground'
             )}
           >
             <Calendar className="mr-2 h-4 w-4" />
@@ -82,22 +139,24 @@ export function DateRangePicker({
           style={{ zIndex: 10000 }}
           onPointerDownOutside={(e) => {
             // Prevent closing when clicking outside if we're inside a modal/overlay
-            // This prevents the backdrop from closing the filter panel
             const target = e.target as HTMLElement;
-            // Don't close if clicking within the filter panel area
             if (target.closest('[data-filter-panel]')) {
               e.preventDefault();
             }
           }}
         >
-          <CalendarComponent
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={handleDateChange}
-            numberOfMonths={2}
-          />
+          <div className="rdr-date-range-picker-wrapper">
+            <CalendarComponent
+              ranges={ranges}
+              onChange={handleDateChange}
+              months={2}
+              direction="horizontal"
+              weekStartsOn={1}
+              showMonthAndYearPickers={true}
+              showDateDisplay={false}
+              mode="range"
+            />
+          </div>
         </PopoverContent>
       </Popover>
       {date && (date.from || date.to) && (
@@ -113,4 +172,3 @@ export function DateRangePicker({
     </div>
   );
 }
-

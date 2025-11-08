@@ -33,7 +33,7 @@ import { workOrders as initialWorkOrders, type WorkOrder } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import currency from 'currency.js';
-import { DateRange } from 'react-day-picker';
+import { DateRange } from './shared/DateRangePicker';
 
 export function WorkOrders() {
   const [searchQuery, setSearchQuery] = useState('');

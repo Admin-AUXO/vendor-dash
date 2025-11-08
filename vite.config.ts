@@ -7,12 +7,15 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
   base: '/vendor-dash-v1/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './'),
+      // Note: Faker is still needed because data is generated at import time.
+      // For production, consider pre-generating data as JSON and moving faker to devDependencies.
+      // This would eliminate the 2.4MB faker bundle from production.
     },
   },
   build: {
@@ -24,14 +27,48 @@ export default defineConfig({
             return 'vendor-react';
           }
           
-          // Split Radix UI components into a separate chunk
-          if (id.includes('@radix-ui')) {
-            return 'vendor-radix';
+          // Split PDF libraries (heavy, rarely used)
+          if (id.includes('@react-pdf') || id.includes('react-pdf')) {
+            return 'vendor-pdf';
+          }
+          
+          // Split Tiptap editor (heavy, rarely used)
+          if (id.includes('@tiptap')) {
+            return 'vendor-editor';
           }
           
           // Split Recharts (charting library) into a separate chunk
           if (id.includes('recharts')) {
             return 'vendor-charts';
+          }
+          
+          // Split TanStack Table (table library)
+          if (id.includes('@tanstack/react-table') || id.includes('@tanstack/react-virtual')) {
+            return 'vendor-table';
+          }
+          
+          // Split Excel/CSV libraries (only used for exports, dynamically imported)
+          // Note: xlsx is dynamically imported, but Vite may still bundle it
+          // if it's imported anywhere statically. We'll keep it separate.
+          if (id.includes('xlsx') || id.includes('papaparse')) {
+            return 'vendor-export';
+          }
+          
+          // Split Faker (data generation - keep separate for potential tree-shaking)
+          // Note: Faker is large (2.4MB). For production, consider pre-generating data
+          // and moving faker to devDependencies
+          if (id.includes('@faker-js') || id.includes('/faker') || id.includes('\\faker')) {
+            return 'vendor-faker';
+          }
+          
+          // Split date-fns (used frequently but can be separate)
+          if (id.includes('date-fns')) {
+            return 'vendor-dates';
+          }
+          
+          // Split Radix UI components into a separate chunk
+          if (id.includes('@radix-ui')) {
+            return 'vendor-radix';
           }
           
           // Split other UI libraries into a separate chunk
@@ -42,17 +79,25 @@ export default defineConfig({
             id.includes('sonner') ||
             id.includes('embla-carousel-react') ||
             id.includes('react-day-picker') ||
+            id.includes('react-datepicker') ||
+            id.includes('react-date-range') ||
             id.includes('react-resizable-panels') ||
             id.includes('react-hook-form') ||
+            id.includes('react-dropzone') ||
+            id.includes('react-vertical-timeline-component') ||
             id.includes('input-otp') ||
             id.includes('class-variance-authority') ||
             id.includes('clsx') ||
-            id.includes('tailwind-merge')
+            id.includes('tailwind-merge') ||
+            id.includes('currency.js') ||
+            id.includes('fuse.js') ||
+            id.includes('use-debounce') ||
+            id.includes('zod')
           ) {
             return 'vendor-ui';
           }
           
-          // Split node_modules into vendor chunk
+          // Split remaining node_modules into vendor chunk
           if (id.includes('node_modules')) {
             return 'vendor';
           }
@@ -61,5 +106,11 @@ export default defineConfig({
     },
     chunkSizeWarningLimit: 600,
   },
-})
+  optimizeDeps: {
+    // Exclude faker from dependency optimization
+    // Note: Faker will still be bundled because data generation happens at import time
+    // To fully exclude it, pre-generate data as JSON files and move faker to devDependencies
+    exclude: ['@faker-js/faker'],
+  },
+}))
 
