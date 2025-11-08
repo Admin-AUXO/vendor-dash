@@ -71,9 +71,14 @@ export function Timeline({ items, className }: TimelineProps) {
                       <p className="mt-1 text-sm text-gray-600">{item.description}</p>
                     )}
                   </div>
-                  <time className="text-xs text-gray-500 whitespace-nowrap">
-                    {format(timestamp, 'MMM dd, yyyy HH:mm')}
-                  </time>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-xs text-gray-500 whitespace-nowrap">
+                      {format(timestamp, 'HH:mm')}
+                    </div>
+                    <div className="text-xs text-gray-500 whitespace-nowrap mt-0.5">
+                      {format(timestamp, 'MMM dd, yyyy')}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

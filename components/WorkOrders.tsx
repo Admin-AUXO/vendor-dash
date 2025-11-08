@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from './ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { 
   StatCard, 
   FilterSystem,
@@ -11,6 +12,8 @@ import {
   EmptyState,
   TruncatedText,
   ColumnVisibilityToggle,
+  InboxWorkOrderCard,
+  InboxPagination,
   type FilterGroup,
 } from './shared';
 import { 
@@ -19,9 +22,14 @@ import {
   CheckCircle, 
   AlertCircle,
   Plus,
-  Filter
+  Filter,
+  Mail,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
-import { workOrders, type WorkOrder } from '../data';
+import { workOrders as initialWorkOrders, type WorkOrder } from '../data';
 import { ColumnDef } from '@tanstack/react-table';
 import { format } from 'date-fns';
 import currency from 'currency.js';
@@ -35,6 +43,16 @@ export function WorkOrders() {
   });
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [tableInstance, setTableInstance] = useState<any>(null);
+  const [activeInboxTab, setActiveInboxTab] = useState('awaiting-response');
+  
+  // Work orders state management (for updating status)
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(initialWorkOrders);
+  
+  // Pagination state for each tab
+  const [awaitingResponsePage, setAwaitingResponsePage] = useState(0);
+  const [myWorkOrdersPage, setMyWorkOrdersPage] = useState(0);
+  const [rejectedPage, setRejectedPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Stable callback for table ready
   const handleTableReady = useCallback((table: any) => {
@@ -83,6 +101,106 @@ export function WorkOrders() {
 
     return { pending, inProgress, completed, overdue };
   }, []);
+
+  // Inbox categorization
+  const inboxData = useMemo(() => {
+    const awaitingResponse = workOrders.filter((wo: WorkOrder) => wo.status === 'pending');
+    const myWorkOrders = workOrders.filter((wo: WorkOrder) => 
+      wo.status === 'assigned' || wo.status === 'in-progress' || (wo.assignedTechnician && wo.status !== 'completed' && wo.status !== 'cancelled')
+    );
+    const rejected = workOrders.filter((wo: WorkOrder) => wo.status === 'cancelled');
+
+    return {
+      awaitingResponse,
+      myWorkOrders,
+      rejected,
+    };
+  }, [workOrders]);
+
+  // Paginated data for each tab
+  const paginatedInboxData = useMemo(() => {
+    const getPaginated = (data: WorkOrder[], page: number, perPage: number) => {
+      const start = page * perPage;
+      const end = start + perPage;
+      return {
+        items: data.slice(start, end),
+        totalPages: Math.ceil(data.length / perPage),
+        totalItems: data.length,
+      };
+    };
+
+    return {
+      awaitingResponse: getPaginated(inboxData.awaitingResponse, awaitingResponsePage, itemsPerPage),
+      myWorkOrders: getPaginated(inboxData.myWorkOrders, myWorkOrdersPage, itemsPerPage),
+      rejected: getPaginated(inboxData.rejected, rejectedPage, itemsPerPage),
+    };
+  }, [inboxData, awaitingResponsePage, myWorkOrdersPage, rejectedPage, itemsPerPage]);
+
+  // Action handlers
+  const handleMoveToInProgress = useCallback((workOrderId: string) => {
+    setWorkOrders(prev => prev.map(wo => 
+      wo.id === workOrderId 
+        ? { ...wo, status: 'in-progress' as const, assignedTechnician: wo.assignedTechnician || 'Current User' }
+        : wo
+    ));
+  }, []);
+
+  const handleMoveToRejected = useCallback((workOrderId: string) => {
+    setWorkOrders(prev => prev.map(wo => 
+      wo.id === workOrderId 
+        ? { ...wo, status: 'cancelled' as const }
+        : wo
+    ));
+  }, []);
+
+  const handleArchive = useCallback((workOrderId: string) => {
+    setWorkOrders(prev => prev.filter(wo => wo.id !== workOrderId));
+  }, []);
+
+  // Handle items per page change - reset to first page
+  const handleItemsPerPageChange = useCallback((newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setAwaitingResponsePage(0);
+    setMyWorkOrdersPage(0);
+    setRejectedPage(0);
+  }, []);
+
+  // Pagination handlers
+  const handlePageChange = useCallback((tab: string, page: number) => {
+    if (tab === 'awaiting-response') setAwaitingResponsePage(page);
+    else if (tab === 'my-work-orders') setMyWorkOrdersPage(page);
+    else if (tab === 'rejected') setRejectedPage(page);
+  }, []);
+
+  // Reset pagination when switching tabs
+  const handleTabChange = useCallback((value: string) => {
+    setActiveInboxTab(value);
+    // Optionally reset to first page when switching tabs
+    // setAwaitingResponsePage(0);
+    // setMyWorkOrdersPage(0);
+    // setRejectedPage(0);
+  }, []);
+
+  // Adjust pagination when items are removed/moved
+  useEffect(() => {
+    // Adjust awaiting response page
+    const awaitingTotalPages = Math.ceil(inboxData.awaitingResponse.length / itemsPerPage);
+    if (awaitingTotalPages > 0 && awaitingResponsePage >= awaitingTotalPages) {
+      setAwaitingResponsePage(awaitingTotalPages - 1);
+    }
+
+    // Adjust my work orders page
+    const myWorkOrdersTotalPages = Math.ceil(inboxData.myWorkOrders.length / itemsPerPage);
+    if (myWorkOrdersTotalPages > 0 && myWorkOrdersPage >= myWorkOrdersTotalPages) {
+      setMyWorkOrdersPage(myWorkOrdersTotalPages - 1);
+    }
+
+    // Adjust rejected page
+    const rejectedTotalPages = Math.ceil(inboxData.rejected.length / itemsPerPage);
+    if (rejectedTotalPages > 0 && rejectedPage >= rejectedTotalPages) {
+      setRejectedPage(rejectedTotalPages - 1);
+    }
+  }, [inboxData, itemsPerPage, awaitingResponsePage, myWorkOrdersPage, rejectedPage]);
 
   // Define columns
   const columns: ColumnDef<WorkOrder>[] = useMemo(() => [
@@ -243,6 +361,178 @@ export function WorkOrders() {
           value={summaryStats.overdue}
           icon={AlertCircle}
         />
+      </div>
+
+      {/* Inbox Section */}
+      <div className="space-y-4">
+        {/* Inbox Title - Outside the card */}
+        <div className="flex items-center gap-2">
+          <Mail className="w-5 h-5 text-yellow-600" />
+          <h2 className="text-2xl font-semibold text-gray-900">Inbox</h2>
+        </div>
+
+        {/* Inbox Tabs and Content */}
+        <Card>
+          <CardContent className="p-0">
+            <Tabs value={activeInboxTab} onValueChange={handleTabChange} className="w-full">
+              {/* Tab Headers - Slider Design */}
+              <div className="bg-gray-100 border-b border-gray-200 rounded-t-lg p-1.5">
+                <TabsList className="grid w-full grid-cols-3 bg-transparent p-0 h-auto gap-1.5">
+                  <TabsTrigger
+                    value="awaiting-response"
+                    className="text-gray-600 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 rounded-md px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 border-0"
+                  >
+                    <span className="whitespace-nowrap">Awaiting Response</span>
+                    <Badge
+                      className={`h-5 min-w-[20px] px-1 rounded-full text-xs font-semibold flex items-center justify-center border-0 ${
+                        activeInboxTab === 'awaiting-response'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-300 text-gray-600'
+                      }`}
+                    >
+                      {inboxData.awaitingResponse.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="my-work-orders"
+                    className="text-gray-600 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 rounded-md px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 border-0"
+                  >
+                    <span className="whitespace-nowrap">My Work Orders</span>
+                    <Badge
+                      className={`h-5 min-w-[20px] px-1 rounded-full text-xs font-semibold flex items-center justify-center border-0 ${
+                        activeInboxTab === 'my-work-orders'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-300 text-gray-600'
+                      }`}
+                    >
+                      {inboxData.myWorkOrders.length}
+                    </Badge>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="rejected"
+                    className="text-gray-600 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 rounded-md px-4 py-2.5 font-medium transition-all duration-200 flex items-center justify-center gap-2 border-0"
+                  >
+                    <span className="whitespace-nowrap">Rejected</span>
+                    <Badge
+                      className={`h-5 min-w-[20px] px-1 rounded-full text-xs font-semibold flex items-center justify-center border-0 ${
+                        activeInboxTab === 'rejected'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-300 text-gray-600'
+                      }`}
+                    >
+                      {inboxData.rejected.length}
+                    </Badge>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              {/* Tab Content */}
+              <div className="p-4">
+                <TabsContent value="awaiting-response" className="mt-0 space-y-4">
+                  {paginatedInboxData.awaitingResponse.items.length > 0 ? (
+                    <>
+                      <div className="space-y-3">
+                        {paginatedInboxData.awaitingResponse.items.map((wo: WorkOrder) => (
+                          <InboxWorkOrderCard
+                            key={wo.id}
+                            workOrder={wo}
+                            onViewDetails={() => console.log('Navigate to work order:', wo.id)}
+                            onAction={() => handleMoveToInProgress(wo.id)}
+                            actionLabel="Move to In Progress"
+                            actionVariant="default"
+                          />
+                        ))}
+                      </div>
+                      {/* Pagination Controls */}
+                      <InboxPagination
+                        currentPage={awaitingResponsePage}
+                        totalPages={paginatedInboxData.awaitingResponse.totalPages}
+                        itemsPerPage={itemsPerPage}
+                        totalItems={paginatedInboxData.awaitingResponse.totalItems}
+                        onPageChange={(page) => handlePageChange('awaiting-response', page)}
+                          onItemsPerPageChange={handleItemsPerPageChange}
+                      />
+                    </>
+                  ) : (
+                    <EmptyState
+                      title="No work orders awaiting response"
+                      description="All work orders have been responded to"
+                      variant="empty"
+                    />
+                  )}
+                </TabsContent>
+
+                <TabsContent value="my-work-orders" className="mt-0 space-y-4">
+                  {paginatedInboxData.myWorkOrders.items.length > 0 ? (
+                    <>
+                      <div className="space-y-3">
+                        {paginatedInboxData.myWorkOrders.items.map((wo: WorkOrder) => (
+                          <InboxWorkOrderCard
+                            key={wo.id}
+                            workOrder={wo}
+                            onViewDetails={() => console.log('Navigate to work order:', wo.id)}
+                            onAction={() => handleMoveToRejected(wo.id)}
+                            actionLabel="Move to Rejected"
+                            actionVariant="destructive"
+                          />
+                        ))}
+                      </div>
+                      {/* Pagination Controls */}
+                      <InboxPagination
+                        currentPage={myWorkOrdersPage}
+                        totalPages={paginatedInboxData.myWorkOrders.totalPages}
+                        itemsPerPage={itemsPerPage}
+                        totalItems={paginatedInboxData.myWorkOrders.totalItems}
+                        onPageChange={(page) => handlePageChange('my-work-orders', page)}
+                          onItemsPerPageChange={handleItemsPerPageChange}
+                      />
+                    </>
+                  ) : (
+                    <EmptyState
+                      title="No work orders assigned to you"
+                      description="Work orders assigned to you will appear here"
+                      variant="empty"
+                    />
+                  )}
+                </TabsContent>
+
+                <TabsContent value="rejected" className="mt-0 space-y-4">
+                  {paginatedInboxData.rejected.items.length > 0 ? (
+                    <>
+                      <div className="space-y-3">
+                        {paginatedInboxData.rejected.items.map((wo: WorkOrder) => (
+                          <InboxWorkOrderCard
+                            key={wo.id}
+                            workOrder={wo}
+                            onViewDetails={() => console.log('Navigate to work order:', wo.id)}
+                            onAction={() => handleArchive(wo.id)}
+                            actionLabel="Archive"
+                            actionVariant="outline"
+                          />
+                        ))}
+                      </div>
+                      {/* Pagination Controls */}
+                      <InboxPagination
+                        currentPage={rejectedPage}
+                        totalPages={paginatedInboxData.rejected.totalPages}
+                        itemsPerPage={itemsPerPage}
+                        totalItems={paginatedInboxData.rejected.totalItems}
+                        onPageChange={(page) => handlePageChange('rejected', page)}
+                          onItemsPerPageChange={handleItemsPerPageChange}
+                      />
+                    </>
+                  ) : (
+                    <EmptyState
+                      title="No rejected work orders"
+                      description="Rejected work orders will appear here"
+                      variant="empty"
+                    />
+                  )}
+                </TabsContent>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filter System - Mobile */}

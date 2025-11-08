@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from './ui';
 import { 
   StatCard, 
   Timeline,
-  WorkOrderCard,
+  InboxWorkOrderCard,
+  InboxPagination,
   useNavigation,
 } from './shared';
 import { 
@@ -40,33 +41,71 @@ export function Overview() {
   // Get primary color from CSS variables
   const primaryColor = useMemo(() => getCSSVariable('--primary', '#f7d604'), []);
 
+  // Pagination state for urgent work orders
+  const [urgentWorkOrdersPage, setUrgentWorkOrdersPage] = useState(0);
+  const [urgentWorkOrdersPerPage, setUrgentWorkOrdersPerPage] = useState(5);
+
   // Get total count of urgent work orders
   const totalUrgentWorkOrders = useMemo(() => {
     return workOrders.filter((wo: WorkOrder) => wo.priority === 'urgent' || wo.priority === 'high').length;
   }, []);
 
-  // Get urgent work orders - increase from 5 to 7 cards
-  const urgentWorkOrders = useMemo(() => {
-    return workOrders
-      .filter((wo: WorkOrder) => wo.priority === 'urgent' || wo.priority === 'high')
-      .slice(0, 7);
+  // Get all urgent work orders
+  const allUrgentWorkOrders = useMemo(() => {
+    return workOrders.filter((wo: WorkOrder) => wo.priority === 'urgent' || wo.priority === 'high');
   }, []);
 
-  // Format activities for timeline
-  const timelineItems = useMemo(() => {
-    return activities
-      .slice(0, 10)
-      .map((activity: Activity) => ({
-        id: activity.id,
-        title: activity.title,
-        description: activity.description,
-        timestamp: activity.timestamp,
-        status: activity.type.includes('completed') || activity.type.includes('paid') ? 'success' as const :
-                activity.type.includes('urgent') || activity.type.includes('overdue') ? 'error' as const :
-                activity.type.includes('pending') || activity.type.includes('created') ? 'warning' as const :
-                'info' as const,
-      }));
+  // Get paginated urgent work orders
+  const paginatedUrgentWorkOrders = useMemo(() => {
+    const start = urgentWorkOrdersPage * urgentWorkOrdersPerPage;
+    const end = start + urgentWorkOrdersPerPage;
+    return {
+      items: allUrgentWorkOrders.slice(start, end),
+      totalPages: Math.ceil(allUrgentWorkOrders.length / urgentWorkOrdersPerPage),
+      totalItems: allUrgentWorkOrders.length,
+    };
+  }, [allUrgentWorkOrders, urgentWorkOrdersPage, urgentWorkOrdersPerPage]);
+
+  // Handle page change
+  const handlePageChange = useCallback((page: number) => {
+    setUrgentWorkOrdersPage(page);
   }, []);
+
+  // Handle items per page change
+  const handleItemsPerPageChange = useCallback((itemsPerPage: number) => {
+    setUrgentWorkOrdersPerPage(itemsPerPage);
+    setUrgentWorkOrdersPage(0);
+  }, []);
+
+  // Timeline state for load more
+  const [timelineItemsToShow, setTimelineItemsToShow] = useState(10);
+  const timelineItemsPerLoad = 10;
+
+  // Format all activities for timeline
+  const allTimelineItems = useMemo(() => {
+    return activities.map((activity: Activity) => ({
+      id: activity.id,
+      title: activity.title,
+      description: activity.description,
+      timestamp: activity.timestamp,
+      status: activity.type.includes('completed') || activity.type.includes('paid') ? 'success' as const :
+              activity.type.includes('urgent') || activity.type.includes('overdue') ? 'error' as const :
+              activity.type.includes('pending') || activity.type.includes('created') ? 'warning' as const :
+              'info' as const,
+    }));
+  }, []);
+
+  // Get displayed timeline items
+  const timelineItems = useMemo(() => {
+    return allTimelineItems.slice(0, timelineItemsToShow);
+  }, [allTimelineItems, timelineItemsToShow]);
+
+  // Handle load more
+  const handleLoadMore = useCallback(() => {
+    setTimelineItemsToShow(prev => Math.min(prev + timelineItemsPerLoad, allTimelineItems.length));
+  }, [allTimelineItems.length]);
+
+  const hasMoreTimelineItems = timelineItemsToShow < allTimelineItems.length;
 
   // Format revenue data for chart with average
   const revenueChartData = useMemo(() => {
@@ -239,16 +278,29 @@ export function Overview() {
           </CardHeader>
           </div>
           <CardContent className="pt-4">
-            {urgentWorkOrders.length > 0 ? (
-                <div className="space-y-3">
-                  {urgentWorkOrders.map((wo: WorkOrder) => (
-                    <WorkOrderCard
+            {paginatedUrgentWorkOrders.items.length > 0 ? (
+              <div className="space-y-4" style={{ maxHeight: '750px', display: 'flex', flexDirection: 'column' }}>
+                <div className="space-y-3 overflow-y-auto pr-2 flex-1" style={{ minHeight: 0 }}>
+                  {paginatedUrgentWorkOrders.items.map((wo: WorkOrder) => (
+                    <InboxWorkOrderCard
                       key={wo.id}
                       workOrder={wo}
-                      onClick={() => console.log('Navigate to work order:', wo.id)}
+                      onViewDetails={() => console.log('Navigate to work order:', wo.id)}
                     />
                   ))}
                 </div>
+                {/* Pagination Controls */}
+                <div className="flex-shrink-0">
+                  <InboxPagination
+                    currentPage={urgentWorkOrdersPage}
+                    totalPages={paginatedUrgentWorkOrders.totalPages}
+                    itemsPerPage={urgentWorkOrdersPerPage}
+                    totalItems={paginatedUrgentWorkOrders.totalItems}
+                    onPageChange={handlePageChange}
+                    onItemsPerPageChange={handleItemsPerPageChange}
+                  />
+                </div>
+              </div>
             ) : (
               <p className="text-sm text-gray-500 text-center py-8">No urgent work orders</p>
             )}
@@ -263,8 +315,22 @@ export function Overview() {
               Recent Activity
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Timeline items={timelineItems} />
+          <CardContent className="pt-4">
+            <div className="overflow-y-auto pr-2" style={{ maxHeight: '750px' }}>
+              <Timeline items={timelineItems} />
+              {hasMoreTimelineItems && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoadMore}
+                    className="w-full"
+                  >
+                    Load More ({allTimelineItems.length - timelineItemsToShow} remaining)
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -35,6 +35,8 @@ export { TopHeader } from './TopHeader';
 export { UserProfile } from './UserProfile';
 export { DashboardLayout } from './DashboardLayout';
 export { WorkOrderCard } from './WorkOrderCard';
+export { InboxWorkOrderCard } from './InboxWorkOrderCard';
+export { InboxPagination } from './InboxPagination';
 export { TruncatedText } from './TruncatedText';
 export { NavigationProvider, useNavigation } from './NavigationContext';
 
