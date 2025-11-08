@@ -9,7 +9,7 @@ const __dirname = dirname(__filename)
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/vendor-dash/',
+  base: '/vendor-dash-v1/',
   resolve: {
     alias: {
       '@': resolve(__dirname, './'),

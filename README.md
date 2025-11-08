@@ -35,7 +35,7 @@ This project is automatically deployed to GitHub Pages using GitHub Actions. The
 1. Go to your repository settings on GitHub
 2. Navigate to "Pages" in the left sidebar
 3. Under "Source", select "GitHub Actions"
-4. The site will be available at: `https://admin-auxo.github.io/vendor-dash/`
+4. The site will be available at: `https://admin-auxo.github.io/vendor-dash-v1/`
 
 ## Project Structure
 
