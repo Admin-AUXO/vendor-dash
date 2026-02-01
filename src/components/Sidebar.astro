@@ -1,0 +1,37 @@
+---
+import NavIcon from './NavIcon.astro';
+const nav = [
+  { href: '/', label: 'Home', icon: 'home' },
+  { href: '/projects', label: 'Projects', icon: 'folder' },
+  { href: '/work-orders', label: 'Work Orders', icon: 'document' },
+  { href: '/invoices', label: 'Invoices', icon: 'clipboard' },
+  { href: '/payments', label: 'Payments', icon: 'wallet' },
+  { href: '/marketplace', label: 'Marketplace', icon: 'store' },
+  { href: '/archive', label: 'Archive', icon: 'archive' },
+  { href: '/helpdesk', label: 'Helpdesk', icon: 'help' },
+];
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+<aside class="w-56 shrink-0 bg-neutral-200 border-r border-neutral-300 flex flex-col" aria-label="Main navigation">
+  <div class="p-4 border-b border-neutral-300">
+    <span class="font-semibold text-neutral-800 text-sm">GIX</span>
+  </div>
+  <nav class="flex-1 p-2 space-y-0.5">
+    {nav.map((item) => {
+      const isActive = current === (item.href === '/' ? '/' : item.href) || (item.href !== '/' && current.startsWith(item.href));
+      return (
+        <a
+          href={item.href}
+          class:list={[
+            'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+            isActive ? 'bg-brand text-neutral-900' : 'text-neutral-700 hover:bg-neutral-300',
+          ]}
+          aria-current={isActive ? 'page' : undefined}
+        >
+          <NavIcon name={item.icon} />
+          {item.label}
+        </a>
+      );
+    })}
+  </nav>
+</aside>
