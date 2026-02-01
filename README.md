@@ -18,6 +18,6 @@ npm run preview
 
 ## GitHub Pages
 
+- **Live:** https://admin-auxo.github.io/vendor-dash/
 1. In **Settings → Pages**, set source to **GitHub Actions**.
-2. In `astro.config.mjs`, set `site` to your Pages URL (e.g. `https://YOUR_USERNAME.github.io`) so the site works under `base: '/vendor-dash/'`.
-3. Push to `main`; the workflow builds and deploys to `https://YOUR_USERNAME.github.io/vendor-dash/`.
+2. Push to `main`; the workflow builds and deploys to the repo’s Pages URL.
